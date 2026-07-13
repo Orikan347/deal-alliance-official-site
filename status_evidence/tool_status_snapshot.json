@@ -1,9 +1,9 @@
 {
   "schema_version": "DA_TOOL_STATUS_SNAPSHOT_V1",
-  "captured_on": "2026-07-13",
+  "captured_on": "2026-07-14",
   "source": {
     "path": "400_桌面程式優化/工具整合狀態表.md",
-    "sha256": "efa7f3fa5fe1b18e98c9127b57c58330678f67134b0a7b94bf4b2b1ecb89c363"
+    "sha256": "2485b6d04c82812cce4e17f48d1bb156ac93ea34fbcf186bc52aad3d1f9d87d8"
   },
   "tools": [
     {
@@ -16,11 +16,11 @@
     },
     {
       "product_id": "line_automation",
-      "source_status": "MAC_COMPILED_V2_CANDIDATE_PRE_SIGN_GUI_PENDING",
+      "source_status": "MAC_COMPILED_V3_CANDIDATE_PRE_SIGN_GUI_PENDING",
       "offer_status": "WAITLIST_ONLY",
-      "status_label": "候補中・不可下載，V2 實機驗收中",
+      "status_label": "候補中・不可下載，V3 實機驗收中",
       "public_summary": "協助整理 LINE 訊息流程與發送前確認；不在公開站登入或發送。",
-      "public_platform": "編譯式 V2 候選僅通過掃描與假資料 Gate；GUI／不發送、重簽與公證待完成"
+      "public_platform": "編譯式 V3 候選僅通過掃描與假資料 Gate；GUI／不發送、重簽與公證待完成"
     },
     {
       "product_id": "contact_converter",

@@ -201,7 +201,7 @@ def check_tool_source_alignment() -> None:
 
     required_markers = {
         "sms_suite": "R27_CORE_PRODUCT_REVIEW_USER_ACCEPTED_STAGING_OAUTH_PENDING",
-        "line_automation": "MAC_COMPILED_V2_CANDIDATE_PRE_SIGN_GUI_PENDING",
+        "line_automation": "MAC_COMPILED_V3_CANDIDATE_PRE_SIGN_GUI_PENDING",
         "contact_converter": "LOCAL_FAKE_E2E_PASS_USER_VISIBLE_ACCEPTANCE_AND_STAGING_PENDING",
         "smart_close": "LOCAL_USER_ACCEPTED_STAGING_RELEASE_PENDING",
         "life_number_calculator": "RESERVED_NOT_OPEN",
