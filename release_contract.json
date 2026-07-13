@@ -1,11 +1,13 @@
 {
   "version": "DA-OFFICIAL-SITE-RELEASE-0.1",
-  "status": "PENDING_EXTERNAL_RELEASE",
+  "status": "PUBLIC_RELEASE_VERIFIED_PENDING_REGISTRATION",
   "origin": "https://www.dealalliancehub.com",
-  "origin_status": "OWNER_CONFIRMED_NOT_DEPLOYED",
+  "origin_status": "PUBLIC_HTTPS_READBACK_VERIFIED",
+  "public_readback": {"verified_at": "2026-07-13", "gate": "tests/verify_public_release.py", "waitlist_post": "not_performed"},
   "deployment_workflow": {"path": ".github/workflows/pages-manual-release.yml", "trigger": "workflow_dispatch", "automatic_publish": false, "owner_approval_required": true},
   "required_public_paths": ["/", "/about/", "/solutions/", "/tools/", "/tools/follow-up-rhythm/", "/tools/sms-suite/", "/tools/line-automation/", "/tools/contact-converter/", "/tools/smart-close/", "/tools/life-number-calculator/", "/resources/", "/faq/", "/waitlist/", "/privacy/", "/terms/", "/404.html", "/robots.txt", "/sitemap.xml", "/llms.txt"],
   "waitlist": {"endpoint_status": "PENDING_FORMAL_HTTPS_ENDPOINT", "success_status": 202, "required_readback": ["ok", "request_id", "status"], "accepted_status": "received", "public_list_endpoint": false},
+  "account_portal": {"status": "CONTRACT_READY_URL_PENDING", "mode": "disabled", "register_url_status": "PENDING_STAGING_HTTPS", "login_url_status": "PENDING_STAGING_HTTPS", "allowed_origins": [], "public_site_behavior": "safe_https_register_and_login_links_only_no_credentials_or_session"},
   "monitoring": {"checks": ["http_status", "latency", "security_headers", "canonical_origin", "sitemap", "waitlist_readback"], "log_policy": "route_status_latency_version_request_id_mask_only_no_payload", "alert_on": ["public_route_failure", "waitlist_readback_failure", "security_header_missing", "origin_mismatch"], "external_setup_status": "PENDING_OWNER_CONFIGURATION"},
   "rollback": {"artifact": "previous_verified_candidate_or_release_commit", "trigger": ["route_failure", "unsafe_data_handling", "invalid_waitlist_readback", "canonical_or_crawler_regression"], "verification_after_rollback": ["all_required_public_paths_200", "headers_readback", "fake_waitlist_contract", "seo_geo_local_gate"]}
 }

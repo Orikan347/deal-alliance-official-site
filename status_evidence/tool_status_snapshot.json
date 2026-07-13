@@ -1,0 +1,50 @@
+{
+  "schema_version": "DA_TOOL_STATUS_SNAPSHOT_V1",
+  "captured_on": "2026-07-13",
+  "source": {
+    "path": "400_桌面程式優化/工具整合狀態表.md",
+    "sha256": "efa7f3fa5fe1b18e98c9127b57c58330678f67134b0a7b94bf4b2b1ecb89c363"
+  },
+  "tools": [
+    {
+      "product_id": "sms_suite",
+      "source_status": "R27_CORE_PRODUCT_REVIEW_USER_ACCEPTED_STAGING_OAUTH_PENDING",
+      "offer_status": "WAITLIST_ONLY",
+      "status_label": "候補中・正式發放未開放",
+      "public_summary": "協助整理生日通知與一般群發的訊息、收件人與發送前確認流程。",
+      "public_platform": "r27 功能候選；尚待 staging OAuth、production build 與 Apple 安全 Gate"
+    },
+    {
+      "product_id": "line_automation",
+      "source_status": "MAC_COMPILED_V2_CANDIDATE_PRE_SIGN_GUI_PENDING",
+      "offer_status": "WAITLIST_ONLY",
+      "status_label": "候補中・不可下載，V2 實機驗收中",
+      "public_summary": "協助整理 LINE 訊息流程與發送前確認；不在公開站登入或發送。",
+      "public_platform": "編譯式 V2 候選僅通過掃描與假資料 Gate；GUI／不發送、重簽與公證待完成"
+    },
+    {
+      "product_id": "contact_converter",
+      "source_status": "LOCAL_FAKE_E2E_PASS_USER_VISIBLE_ACCEPTANCE_AND_STAGING_PENDING",
+      "offer_status": "WAITLIST_ONLY",
+      "status_label": "候補中・正式服務待確認",
+      "public_summary": "將已整理的姓名、電話與 Email 轉成 VCF；正式服務會由後端授權與短期資料邊界保護。",
+      "public_platform": "去識別本機驗收完成；staging HTTPS、權益與取消讀回待完成"
+    },
+    {
+      "product_id": "smart_close",
+      "source_status": "LOCAL_USER_ACCEPTED_STAGING_RELEASE_PENDING",
+      "offer_status": "WAITLIST_ONLY",
+      "status_label": "候補中・正式 AI Gate 待確認",
+      "public_summary": "整理對話中的客戶資訊、下一步與跟進策略；公開示範不呼叫 AI、不保存內容。",
+      "public_platform": "隔離本機已驗收；staging HTTPS、遠端權益與 Gemini E2E 待完成"
+    },
+    {
+      "product_id": "life_number_calculator",
+      "source_status": "RESERVED_NOT_OPEN",
+      "offer_status": "NOT_ENABLED",
+      "status_label": "預留中・尚未開放",
+      "public_summary": "此工具目前只保留產品位置，不提供下載、訂閱或公開操作。",
+      "public_platform": "尚未公開"
+    }
+  ]
+}

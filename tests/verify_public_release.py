@@ -157,7 +157,21 @@ def main() -> int:
         if response.status != 200:
             fail(f"path={path} status={response.status}")
         checked += 1
+        if path == "/llms.txt":
+            required_llms_markers = (
+                f"正式公開網站：{origin}/",
+                f"{origin}/solutions/",
+                f"{origin}/tools/",
+                "公開網站不處理密碼、session、學生資料、管理設定、付款或工具授權。",
+                "公開網站不代收帳密或 token。",
+            )
+            if any(marker not in body for marker in required_llms_markers) or "尚未部署" in body:
+                fail("llms_discovery_or_privacy_boundary_stale")
         if path.endswith("/") and path not in ("/robots.txt", "/sitemap.xml", "/llms.txt"):
+            config_index = body.find('src="/assets/site-config.js"')
+            site_index = body.find('src="/assets/site.js"')
+            if config_index < 0 or site_index < 0 or config_index > site_index:
+                fail(f"path={path} account_portal_bootstrap_missing")
             for header in REQUIRED_HEADERS:
                 if not response.headers.get(header):
                     fail(f"path={path} missing_header={header}")

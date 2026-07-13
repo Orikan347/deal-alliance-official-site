@@ -3,8 +3,8 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
-import os
 import os
 import re
 import socket
@@ -133,8 +133,21 @@ def check_safety() -> None:
     runtime_config = (ROOT / "assets/site-config.js").read_text(encoding="utf-8")
     if 'waitlistMode: "disabled"' not in runtime_config or 'waitlistEndpoint: ""' not in runtime_config:
         fail("waitlist: default runtime configuration must remain fail-closed")
+    if ('accountPortalMode: "disabled"' not in runtime_config
+            or 'accountPortalRegisterUrl: ""' not in runtime_config
+            or 'accountPortalLoginUrl: ""' not in runtime_config):
+        fail("account portal: default runtime configuration must remain fail-closed")
     if "XMLHttpRequest" in js or "navigator.sendBeacon" in js or "if (!remoteEnabled)" not in js:
         fail("waitlist: remote submission is missing the fail-closed guard")
+    account_portal_markers = (
+        "accountPortalRegisterUrl",
+        "accountPortalLoginUrl",
+        "accountPortalAllowedOrigins",
+        "data-account-portal",
+        "portal.protocol !== 'https:'",
+    )
+    if any(marker not in js for marker in account_portal_markers) or "fetch(config.accountPortal" in js:
+        fail("account portal: must be guarded navigation only, never credential submission")
     contract = json.loads((ROOT / "waitlist_contract.json").read_text(encoding="utf-8"))
     if contract.get("status") != "CONTRACT_READY_ENDPOINT_PENDING":
         fail("waitlist: contract must remain endpoint-pending")
@@ -165,36 +178,71 @@ def check_safety() -> None:
         fail("faq: missing FAQPage schema")
     if "@type\":\"SoftwareApplication" not in (ROOT / "tools/follow-up-rhythm/index.html").read_text(encoding="utf-8"):
         fail("tool detail: missing SoftwareApplication schema")
-    print("PASS_PUBLIC_BOUNDARY local_form_no_submit=true default_endpoint_disabled=true tool_catalog=6")
+    print("PASS_PUBLIC_BOUNDARY local_form_no_submit=true default_endpoint_disabled=true account_portal_default_disabled=true tool_catalog=6")
 
 
 def check_tool_source_alignment() -> None:
-    """Ensure public tool states remain aligned with the current internal status table."""
+    """Ensure public tool states have an auditable release-local evidence chain.
+
+    The deployment repository intentionally does not contain the platform-wide
+    status table.  A checked snapshot is therefore required for isolated
+    release validation; when the authoritative table is available locally its
+    content hash and every status code must still match the snapshot.
+    """
     status_path = ROOT.parents[1] / "400_桌面程式優化" / "工具整合狀態表.md"
-    if not status_path.exists():
-        if os.environ.get("DEAL_ALLIANCE_RELEASE_ISOLATED") == "1":
-            catalog = json.loads((ROOT / "tools/catalog.json").read_text(encoding="utf-8"))
-            required = {"sms_suite", "line_automation", "contact_converter", "smart_close", "life_number_calculator"}
-            seen = {item.get("product_id") for item in catalog}
-            if not required.issubset(seen):
-                fail("tools: release catalog snapshot is incomplete")
-            if any(not item.get("status_label") or not item.get("last_reviewed") for item in catalog):
-                fail("tools: release catalog snapshot lacks status evidence")
-            print("PASS_TOOL_SOURCE_ALIGNMENT products=5 source=release_catalog_snapshot")
-            return
-        fail("tools: source status table is missing")
-    source = status_path.read_text(encoding="utf-8")
+    snapshot_path = ROOT / "status_evidence" / "tool_status_snapshot.json"
+    if not snapshot_path.exists():
+        fail("tools: release status evidence snapshot is missing")
+    snapshot = json.loads(snapshot_path.read_text(encoding="utf-8"))
+    if snapshot.get("schema_version") != "DA_TOOL_STATUS_SNAPSHOT_V1":
+        fail("tools: release status evidence schema is invalid")
+    if not snapshot.get("captured_on") or not snapshot.get("source", {}).get("sha256"):
+        fail("tools: release status evidence provenance is incomplete")
+
     required_markers = {
-        "sms_suite": "TWO_SIGNED_CANDIDATES_PENDING_NOTARIZATION",
-        "line_automation": "MACOS13_SIGNED_3_0_4_PENDING_NOTARIZATION",
-        "contact_converter": "CLOUDFLARE_STAGING_RATE_LIMIT_DEPLOYED_REMOTE_E2E_PENDING",
-        "smart_close": "CLOUDFLARE_STAGING_RATE_LIMIT_DEPLOYED_GEMINI_E2E_PENDING",
+        "sms_suite": "R27_CORE_PRODUCT_REVIEW_USER_ACCEPTED_STAGING_OAUTH_PENDING",
+        "line_automation": "MAC_COMPILED_V2_CANDIDATE_PRE_SIGN_GUI_PENDING",
+        "contact_converter": "LOCAL_FAKE_E2E_PASS_USER_VISIBLE_ACCEPTANCE_AND_STAGING_PENDING",
+        "smart_close": "LOCAL_USER_ACCEPTED_STAGING_RELEASE_PENDING",
         "life_number_calculator": "RESERVED_NOT_OPEN",
     }
-    missing = [product_id for product_id, marker in required_markers.items() if marker not in source]
-    if missing:
-        fail(f"tools: source status markers missing {missing}")
-    print("PASS_TOOL_SOURCE_ALIGNMENT products=5 source=400_status_table")
+    evidence = {item.get("product_id"): item for item in snapshot.get("tools", [])}
+    if set(evidence) != set(required_markers):
+        fail("tools: release status evidence products are incomplete")
+    for product_id, marker in required_markers.items():
+        item = evidence[product_id]
+        if item.get("source_status") != marker:
+            fail(f"tools: release status evidence marker mismatch {product_id}")
+        if item.get("offer_status") not in {"WAITLIST_ONLY", "NOT_ENABLED"}:
+            fail(f"tools: release status evidence exposes an unapproved offer {product_id}")
+        if not item.get("status_label"):
+            fail(f"tools: release status evidence lacks public label {product_id}")
+
+    catalog = {item.get("product_id"): item for item in json.loads((ROOT / "tools/catalog.json").read_text(encoding="utf-8"))}
+    for product_id, item in evidence.items():
+        public_item = catalog.get(product_id)
+        if not public_item:
+            fail(f"tools: public catalog lacks evidence product {product_id}")
+        for field in ("offer_status", "status_label", "summary", "platform"):
+            evidence_key = field if field in {"offer_status", "status_label"} else f"public_{field}"
+            if public_item.get(field) != item.get(evidence_key):
+                fail(f"tools: public catalog {field} is not aligned {product_id}")
+        if public_item.get("last_reviewed") != snapshot["captured_on"]:
+            fail(f"tools: public catalog review date is not aligned {product_id}")
+
+    if (ROOT / "dist" / "status_evidence").exists():
+        fail("tools: internal status evidence must not enter the public artifact")
+    if status_path.exists():
+        source_bytes = status_path.read_bytes()
+        if hashlib.sha256(source_bytes).hexdigest() != snapshot["source"]["sha256"]:
+            fail("tools: release status evidence is stale against the source table")
+        source = source_bytes.decode("utf-8")
+        missing = [product_id for product_id, marker in required_markers.items() if marker not in source]
+        if missing:
+            fail(f"tools: source status markers missing {missing}")
+        print("PASS_TOOL_SOURCE_ALIGNMENT products=5 source=400_status_table+release_snapshot")
+        return
+    print("PASS_TOOL_SOURCE_ALIGNMENT products=5 source=release_status_snapshot")
 
 
 def check_sitemap_and_responsive_css() -> None:
@@ -222,6 +270,42 @@ def check_sitemap_and_responsive_css() -> None:
     if not social_card.exists() or social_card.read_bytes()[:8] != b"\x89PNG\r\n\x1a\n":
         fail("share card PNG is missing or invalid")
     print(f"PASS_SITEMAP_AND_MOBILE sitemap_urls={len(locations)}")
+
+
+def check_llms_discovery_document() -> None:
+    llms = (ROOT / "llms.txt").read_text(encoding="utf-8")
+    required = (
+        "正式公開網站：https://www.dealalliancehub.com/",
+        "https://www.dealalliancehub.com/solutions/",
+        "https://www.dealalliancehub.com/tools/",
+        "https://www.dealalliancehub.com/privacy/",
+        "公開網站不處理密碼、session、學生資料、管理設定、付款或工具授權。",
+        "公開網站不代收帳密或 token。",
+    )
+    missing = [marker for marker in required if marker not in llms]
+    if missing or "尚未部署" in llms:
+        fail("llms.txt: public origin, route coverage, or privacy boundary is stale")
+    if (ROOT / "dist/llms.txt").read_text(encoding="utf-8") != llms:
+        fail("llms.txt: dist artifact is out of sync")
+    print("PASS_LLMS_DISCOVERY public_origin=true routes=6 privacy_boundary=true")
+
+
+def check_account_portal_bootstrap() -> None:
+    for route in [*PUBLIC_ROUTES, "/404.html"]:
+        source_html, _ = read_page(route)
+        if route == "/404.html":
+            dist_path = ROOT / "dist/404.html"
+        elif route == "/":
+            dist_path = ROOT / "dist/index.html"
+        else:
+            dist_path = ROOT / "dist" / route.strip("/") / "index.html"
+        dist_html = dist_path.read_text(encoding="utf-8")
+        for label, html in (("source", source_html), ("dist", dist_html)):
+            config_index = html.find('src="/assets/site-config.js"')
+            site_index = html.find('src="/assets/site.js"')
+            if config_index < 0 or site_index < 0 or config_index > site_index:
+                fail(f"account portal: {label} {route} must load runtime config before site.js")
+    print(f"PASS_ACCOUNT_PORTAL_BOOTSTRAP pages={len(PUBLIC_ROUTES) + 1} artifacts=source+dist")
 
 
 def check_fake_visitor_paths() -> None:
@@ -304,17 +388,21 @@ def check_http_routes() -> None:
 
 def main() -> None:
     config = json.loads((ROOT / "site.config.json").read_text(encoding="utf-8"))
-    if config["candidateOrigin"] != ORIGIN or config["canonicalStatus"] != "OWNER_CONFIRMED_FORMAL_ORIGIN_NOT_DEPLOYED":
-        fail("site config must use the owner-confirmed formal origin while remaining not deployed")
+    if config["candidateOrigin"] != ORIGIN or config["canonicalStatus"] not in {"OWNER_CONFIRMED_FORMAL_ORIGIN_NOT_DEPLOYED", "PUBLIC_ORIGIN_VERIFIED_AND_LIVE"}:
+        fail("site config must use the formal origin and a known release status")
+    if config.get("accountPortalStatus") != "CONTRACT_READY_URL_PENDING":
+        fail("site config must retain the account portal contract-pending boundary")
     check_pages()
     check_safety()
     check_tool_source_alignment()
     check_sitemap_and_responsive_css()
+    check_llms_discovery_document()
+    check_account_portal_bootstrap()
     check_fake_visitor_paths()
     check_forbidden_public_claims()
     check_planning_contract()
     check_http_routes()
-    print("PASS_ALL_LOCAL_GATES candidate_origin=www.dealalliancehub.com deployment_pending=true")
+    print(f"PASS_ALL_LOCAL_GATES candidate_origin=www.dealalliancehub.com public_release_verified={str(config['canonicalStatus'] == 'PUBLIC_ORIGIN_VERIFIED_AND_LIVE').lower()} registration_pending=true")
 
 
 if __name__ == "__main__":

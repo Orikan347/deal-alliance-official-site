@@ -1,16 +1,25 @@
 # 成交聯盟 Deal Alliance
 
-正式公開來源（部署後）：https://www.dealalliancehub.com/
-目前狀態：本機公開候選站，尚未部署；以下內容不可解讀為已開放登入、付款、下載或工具授權。
+正式公開網站：https://www.dealalliancehub.com/
 
-狀態：本機公開候選站 v1。僅描述公開問題入口、候補與洽詢方向；不表示已提供付款、下載、登入、學生服務或工具授權。
+成交聯盟是協助使用者把客戶開發、跟進、訊息溝通、成交推進與團隊工作流程說清楚的公開入口。網站先提供問題導向的說明、公開資源與各工具目前狀態；不以未驗證的成效、客戶案例或工具能力作宣稱。
 
-- 首頁：/
-- 解決方案：/solutions/
-- 工具總覽：/tools/
-- 跟進節奏工具候補說明：/tools/follow-up-rhythm/
-- 公開資源：/resources/
-- 常見問題：/faq/
-- 公開候選站隱私邊界：/privacy/
+## 公開入口
 
-正式網域、實際工具開放狀態與正式隱私政策仍待確認。此檔是輔助導覽，不能取代可見 HTML、sitemap 或公開驗證。
+- 首頁：https://www.dealalliancehub.com/
+- 關於成交聯盟：https://www.dealalliancehub.com/about/
+- 解決方案：https://www.dealalliancehub.com/solutions/
+- 工具總覽：https://www.dealalliancehub.com/tools/
+- 公開資源：https://www.dealalliancehub.com/resources/
+- 常見問題：https://www.dealalliancehub.com/faq/
+- 隱私權說明：https://www.dealalliancehub.com/privacy/
+- 使用條款：https://www.dealalliancehub.com/terms/
+
+## 服務狀態與資料邊界
+
+- 各工具是否開放，以工具頁的狀態標示為準；尚未開放的工具只提供候補／洽詢與公開說明。
+- 公開網站不處理密碼、session、學生資料、管理設定、付款或工具授權。
+- 建立帳號與登入我的工具，僅會在核准的 HTTPS 後台完成隔離驗收後，以純導向連結提供；公開網站不代收帳密或 token。
+- 候補／洽詢收件端點尚未啟用前，頁面不建立名單、不寄信、不傳送資料。
+
+請以可見 HTML、sitemap、robots、隱私權說明與工具頁的最新公開狀態為準；本檔僅協助 AI 系統理解網站導覽與安全邊界。

@@ -1,15 +1,15 @@
 # 成交聯盟官方網站候選 v1
 
 作品 ID：ORI-WEB-DA-OFFICIAL-MVP-20260713-V1  
-階段：PENDING_USER_ACCEPTANCE  
-狀態：LOCAL_FUNCTIONAL_CANDIDATE_ONLY  
+階段：PENDING_RELEASE_SECURITY
+狀態：PUBLIC_RELEASE_ARTIFACT_OUT_OF_SYNC_PENDING_REGISTRATION
 最後檢查：2026-07-13
 
-這是成交聯盟公開官方網站的本機功能測試候選版。包含首頁、關於、解決方案、六項工具詳情、公開資源、FAQ、候補／洽詢、隱私邊界、使用條款、搜尋空狀態與 404。Codex 已用去識別化假資料完成瀏覽器端測試；目前等待使用者親自驗收核心流程。
+這是成交聯盟公開官方網站的可維護候選來源。包含首頁、關於、解決方案、六項工具詳情、公開資源、FAQ、候補／洽詢、隱私邊界、使用條款、搜尋空狀態與 404。Codex 已用去識別化假資料完成核心流程、候補 receiver 與帳號入口的安全測試；使用者核心流程驗收與後台 HTTPS 假帳號 E2E 仍待完成。
 
 正式工具仍是候補／洽詢狀態；四個工具頁提供的只是瀏覽器本機假資料示範，不登入、不呼叫正式 API、不保存、不發送。
 
-公開正式來源已由主窗口確認為 `https://www.dealalliancehub.com`。這只更新本機候選的公開來源 metadata，不代表已部署或已可公開瀏覽。
+公開正式來源為 `https://www.dealalliancehub.com`。目前公開站基礎路由已存在，但最新唯讀 Gate 顯示正式首頁尚未同步 `site-config.js` 的帳號入口 bootstrap；在從本來源重建並受控發布 `dist/`、重新取得公開 PASS 前，不可把候選中的入口／`llms.txt` 修正稱為已上線。
 
 候補收件契約已建立，但 `assets/site-config.js` 預設為 `disabled` 且沒有端點。只有正式 HTTPS 端點、Origin 白名單、隱私版本、保存／刪除規則與 receiver readback 全部核准後，才可切換為啟用。
 
@@ -29,9 +29,11 @@
 
 正式發布／監控／回滾契約：python3 tests/verify_release_contract.py
 
+帳號入口 runtime（使用 `example.invalid` 假網址）：`<bundled-node> tests/verify_account_portal_runtime.mjs`
+
 公開部署後只讀驗收（需 DNS／HTTPS 已就緒）：python3 tests/verify_public_release.py
 
-GitHub Pages 發布工作流程目前只允許手動觸發：`.github/workflows/pages-manual-release.yml`；未取得主窗口發布核准前不會執行。
+發布 artifact 由 `scripts/build-public.sh` 從本來源重建 `dist/`；它不會把 tests、契約或交接文件放進公開輸出。GitHub Pages 發布工作流程目前只允許手動觸發：`.github/workflows/pages-manual-release.yml`；未取得主窗口發布核准前不會執行。
 
 工具狀態對照包含在：python3 tests/verify_site.py
 
@@ -54,4 +56,4 @@ GitHub Pages 發布工作流程目前只允許手動觸發：`.github/workflows/
 - 驗收報告：`驗收報告_2026-07-13.md`。
 - 假收件契約驗收：`python3 tests/verify_waitlist_contract.py`；只使用 `example.invalid` 假資料與本機 fake receiver。
 
-此候選站不可自行部署、送出候補資料、開啟登入、付款或執行正式發送。使用者驗收完成後，才進入正式授權、簽章、公證、乾淨安裝與部署 Gate。
+此候選站不可自行部署、送出候補資料、開啟登入、付款或執行正式發送。帳號入口與候補 receiver 預設均為 `disabled`／空 URL；後台 HTTPS 與去識別化跨系統 E2E 通過後才可受控啟用純導向連結。
