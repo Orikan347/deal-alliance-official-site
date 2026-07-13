@@ -208,12 +208,14 @@ def check_sitemap_and_responsive_css() -> None:
     responsive_checks = (
         (r"@media\s*\(max-width:\s*(760|860)px\)", "responsive breakpoint"),
         (r"\.grid-3,\.grid-2\{grid-template-columns:1fr\}", "single-column grid"),
-        (r"\.nav-links\{display:none\}", "mobile navigation collapse"),
+        (r"\.nav-links\{display:(none|flex)(?:;|\})", "mobile navigation rule"),
     )
     compact_css = re.sub(r"\s+", "", css)
     for pattern, label in responsive_checks:
         if not re.search(pattern, compact_css):
             fail(f"responsive CSS missing: {label}")
+    if ".nav-links{display:flex;order:3;width:100%;overflow-x:auto" not in compact_css:
+        fail("responsive CSS missing: mobile navigation remains reachable")
     if not (ROOT / "404.html").exists() or not (ROOT / "search/index.html").exists():
         fail("missing 404 or search empty state")
     social_card = ROOT / "assets/og-card.png"
