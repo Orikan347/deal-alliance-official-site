@@ -3,7 +3,7 @@ set -euo pipefail
 
 # Publish only the public static site. Source contracts, test fixtures and
 # internal handoff reports remain in the repository but are never copied to
-# Cloudflare Pages' output directory.
+# the Pages output directory.
 rm -rf dist
 mkdir -p dist
 
