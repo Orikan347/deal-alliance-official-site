@@ -122,8 +122,16 @@ def check_safety() -> None:
     if any("action" in form for form in parser.forms):
         fail("waitlist: form must not have a submit action")
     js = (ROOT / "assets/site.js").read_text(encoding="utf-8")
-    if "fetch(" in js or "XMLHttpRequest" in js or "navigator.sendBeacon" in js:
-        fail("waitlist: client script contains an outbound request")
+    runtime_config = (ROOT / "assets/site-config.js").read_text(encoding="utf-8")
+    if 'waitlistMode: "disabled"' not in runtime_config or 'waitlistEndpoint: ""' not in runtime_config:
+        fail("waitlist: default runtime configuration must remain fail-closed")
+    if "XMLHttpRequest" in js or "navigator.sendBeacon" in js or "if (!remoteEnabled)" not in js:
+        fail("waitlist: remote submission is missing the fail-closed guard")
+    contract = json.loads((ROOT / "waitlist_contract.json").read_text(encoding="utf-8"))
+    if contract.get("status") != "CONTRACT_READY_ENDPOINT_PENDING":
+        fail("waitlist: contract must remain endpoint-pending")
+    if contract.get("response", {}).get("success_status") != 202:
+        fail("waitlist: readback contract must require HTTP 202")
     robots = (ROOT / "robots.txt").read_text(encoding="utf-8")
     for required in ("User-agent: OAI-SearchBot", "Allow: /", "Disallow: /admin/", "Disallow: /students/"):
         if required not in robots:
@@ -132,7 +140,7 @@ def check_safety() -> None:
         fail("faq: missing FAQPage schema")
     if "@type\":\"SoftwareApplication" not in (ROOT / "tools/follow-up-rhythm/index.html").read_text(encoding="utf-8"):
         fail("tool detail: missing SoftwareApplication schema")
-    print("PASS_PUBLIC_BOUNDARY local_form_no_submit=true outbound_requests=0")
+    print("PASS_PUBLIC_BOUNDARY local_form_no_submit=true default_endpoint_disabled=true")
 
 
 def check_sitemap_and_responsive_css() -> None:
@@ -181,8 +189,8 @@ def check_fake_visitor_paths() -> None:
     if fake_payload["contact"] in waitlist_html:
         fail("fake payload unexpectedly persisted in the candidate HTML")
     js = (ROOT / "assets/site.js").read_text(encoding="utf-8")
-    if "這是本機候選站示意" not in js or "preventDefault" not in js:
-        fail("local form simulation contract is missing")
+    if "目前仍是本機候選版" not in js or "preventDefault" not in js:
+        fail("local form fail-closed simulation contract is missing")
     print("PASS_FAKE_VISITOR_E2E journeys=4 fake_payload=not_persisted local_form=simulated_only")
 
 

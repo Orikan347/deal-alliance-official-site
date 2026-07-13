@@ -6,6 +6,8 @@
 
 這是成交聯盟公開官方網站的本機靜態候選版。內容只提供首頁、關於、解決方案、工具、公開資源、FAQ、候補／洽詢、隱私邊界、使用條款與 404；沒有登入、付款、學生資料、管理設定、授權邏輯或真實表單送出。
 
+候補收件契約已建立，但 `assets/site-config.js` 預設為 `disabled` 且沒有端點。只有正式 HTTPS 端點、Origin 白名單、隱私版本、保存／刪除規則與 receiver readback 全部核准後，才可切換為啟用。
+
 ## 本機開啟
 
 進入此資料夾後執行：python3 -m http.server 4173
@@ -32,5 +34,6 @@
 - 保護／空狀態路由：`/404.html`、`/search/`；不進 sitemap。
 - 所有工具與候補 CTA 仍是 `WAITLIST_ONLY` 或公開說明，不可購買、下載、試用、登入或啟用。
 - 驗收報告：`驗收報告_2026-07-13.md`。
+- 假收件契約驗收：`python3 tests/verify_waitlist_contract.py`；只使用 `example.invalid` 假資料與本機 fake receiver。
 
 此候選站不可自行部署、送出候補資料、開啟登入、付款或下載。
