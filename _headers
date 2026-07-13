@@ -1,0 +1,8 @@
+# Candidate security headers for a static host.
+# Keep the waitlist receiver same-origin unless the release owner explicitly
+# adds its HTTPS origin to connect-src and the site config allowlist.
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
+  Content-Security-Policy: default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'

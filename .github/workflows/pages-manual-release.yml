@@ -1,0 +1,64 @@
+name: Official site manual release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: official-site-pages
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout candidate
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - name: Run candidate gates
+        env:
+          DEAL_ALLIANCE_RELEASE_ISOLATED: "1"
+        run: |
+          python tests/verify_release_contract.py
+          python tests/verify_headers_contract.py
+          python tests/verify_waitlist_contract.py
+          python tests/verify_site.py
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+      - name: Prepare public-only artifact
+        run: |
+          mkdir -p dist
+          rsync -a ./ dist/ \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='tests' \
+            --exclude='*.md' \
+            --exclude='README.md' \
+            --exclude='site.config.json' \
+            --exclude='waitlist_contract.json' \
+            --exclude='release_contract.json'
+          test -f dist/index.html
+          test ! -e dist/tests
+          test ! -e dist/README.md
+      - name: Upload static artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: validate
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

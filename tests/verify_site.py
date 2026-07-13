@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 import os
+import os
 import re
 import socket
 import subprocess
@@ -16,13 +17,18 @@ from html.parser import HTMLParser
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-ORIGIN = "https://official-domain-pending.invalid"
+ORIGIN = "https://www.dealalliancehub.com"
 PUBLIC_ROUTES = [
     "/",
     "/about/",
     "/solutions/",
     "/tools/",
     "/tools/follow-up-rhythm/",
+    "/tools/sms-suite/",
+    "/tools/line-automation/",
+    "/tools/contact-converter/",
+    "/tools/smart-close/",
+    "/tools/life-number-calculator/",
     "/resources/",
     "/faq/",
     "/waitlist/",
@@ -64,6 +70,8 @@ def fail(message: str) -> None:
 def route_file(route: str) -> Path:
     if route == "/":
         return ROOT / "index.html"
+    if route.endswith(".html"):
+        return ROOT / route.strip("/")
     return ROOT / route.strip("/") / "index.html"
 
 
@@ -132,6 +140,23 @@ def check_safety() -> None:
         fail("waitlist: contract must remain endpoint-pending")
     if contract.get("response", {}).get("success_status") != 202:
         fail("waitlist: readback contract must require HTTP 202")
+    catalog = json.loads((ROOT / "tools/catalog.json").read_text(encoding="utf-8"))
+    expected_tools = {"follow-up-rhythm", "sms-suite", "line-automation", "contact-converter", "smart-close", "life-number-calculator"}
+    if {item.get("slug") for item in catalog} != expected_tools:
+        fail("tools: catalog must include all six confirmed tool positions")
+    for item in catalog:
+        detail = route_file(f"/tools/{item['slug']}/")
+        if not detail.exists() or item.get("offer_status") not in {"WAITLIST_ONLY", "NOT_ENABLED"}:
+            fail(f"tools: invalid catalog/detail {item.get('slug')}")
+        detail_html = detail.read_text(encoding="utf-8")
+        if item.get("status_label") not in detail_html:
+            fail(f"tools: status label missing from {item.get('slug')}")
+    detail_htmls = [route_file("/tools/" + item["slug"] + "/").read_text(encoding="utf-8") for item in catalog]
+    for demo_name in ("contact-converter", "smart-close", "sms-preview", "line-preview"):
+        if not any(f'data-demo="{demo_name}"' in html for html in detail_htmls):
+            fail(f"tools: interactive demo missing {demo_name}")
+    if "清除／取消" not in (ROOT / "assets/site.js").read_text(encoding="utf-8"):
+        fail("tools: interactive demos must expose a cancel/reset control")
     robots = (ROOT / "robots.txt").read_text(encoding="utf-8")
     for required in ("User-agent: OAI-SearchBot", "Allow: /", "Disallow: /admin/", "Disallow: /students/"):
         if required not in robots:
@@ -140,7 +165,36 @@ def check_safety() -> None:
         fail("faq: missing FAQPage schema")
     if "@type\":\"SoftwareApplication" not in (ROOT / "tools/follow-up-rhythm/index.html").read_text(encoding="utf-8"):
         fail("tool detail: missing SoftwareApplication schema")
-    print("PASS_PUBLIC_BOUNDARY local_form_no_submit=true default_endpoint_disabled=true")
+    print("PASS_PUBLIC_BOUNDARY local_form_no_submit=true default_endpoint_disabled=true tool_catalog=6")
+
+
+def check_tool_source_alignment() -> None:
+    """Ensure public tool states remain aligned with the current internal status table."""
+    status_path = ROOT.parents[1] / "400_桌面程式優化" / "工具整合狀態表.md"
+    if not status_path.exists():
+        if os.environ.get("DEAL_ALLIANCE_RELEASE_ISOLATED") == "1":
+            catalog = json.loads((ROOT / "tools/catalog.json").read_text(encoding="utf-8"))
+            required = {"sms_suite", "line_automation", "contact_converter", "smart_close", "life_number_calculator"}
+            seen = {item.get("product_id") for item in catalog}
+            if not required.issubset(seen):
+                fail("tools: release catalog snapshot is incomplete")
+            if any(not item.get("status_label") or not item.get("last_reviewed") for item in catalog):
+                fail("tools: release catalog snapshot lacks status evidence")
+            print("PASS_TOOL_SOURCE_ALIGNMENT products=5 source=release_catalog_snapshot")
+            return
+        fail("tools: source status table is missing")
+    source = status_path.read_text(encoding="utf-8")
+    required_markers = {
+        "sms_suite": "TWO_SIGNED_CANDIDATES_PENDING_NOTARIZATION",
+        "line_automation": "MACOS13_SIGNED_3_0_4_PENDING_NOTARIZATION",
+        "contact_converter": "CLOUDFLARE_STAGING_RATE_LIMIT_DEPLOYED_REMOTE_E2E_PENDING",
+        "smart_close": "CLOUDFLARE_STAGING_RATE_LIMIT_DEPLOYED_GEMINI_E2E_PENDING",
+        "life_number_calculator": "RESERVED_NOT_OPEN",
+    }
+    missing = [product_id for product_id, marker in required_markers.items() if marker not in source]
+    if missing:
+        fail(f"tools: source status markers missing {missing}")
+    print("PASS_TOOL_SOURCE_ALIGNMENT products=5 source=400_status_table")
 
 
 def check_sitemap_and_responsive_css() -> None:
@@ -172,7 +226,7 @@ def check_fake_visitor_paths() -> None:
     """Replay the four documented visitor journeys with non-production data."""
     journeys = {
         "visitor_problem_01": ["/", "/solutions/", "/resources/"],
-        "visitor_tool_02": ["/tools/", "/tools/follow-up-rhythm/", "/waitlist/"],
+        "visitor_tool_02": ["/tools/", "/tools/follow-up-rhythm/", "/tools/sms-suite/", "/tools/contact-converter/", "/tools/smart-close/", "/waitlist/"],
         "visitor_privacy_03": ["/waitlist/", "/privacy/"],
         "crawler_public_04": ["/about/", "/faq/"],
     }
@@ -191,6 +245,8 @@ def check_fake_visitor_paths() -> None:
     js = (ROOT / "assets/site.js").read_text(encoding="utf-8")
     if "目前仍是本機候選版" not in js or "preventDefault" not in js:
         fail("local form fail-closed simulation contract is missing")
+    if "第 ${invalid + 1} 行格式不正確" not in js:
+        fail("contact converter: malformed fake rows must fail visibly")
     print("PASS_FAKE_VISITOR_E2E journeys=4 fake_payload=not_persisted local_form=simulated_only")
 
 
@@ -246,16 +302,17 @@ def check_http_routes() -> None:
 
 def main() -> None:
     config = json.loads((ROOT / "site.config.json").read_text(encoding="utf-8"))
-    if config["candidateOrigin"] != ORIGIN or config["canonicalStatus"] != "PENDING_OFFICIAL_DOMAIN_CONFIRMATION":
-        fail("site config must explicitly retain the pending-domain boundary")
+    if config["candidateOrigin"] != ORIGIN or config["canonicalStatus"] != "OWNER_CONFIRMED_FORMAL_ORIGIN_NOT_DEPLOYED":
+        fail("site config must use the owner-confirmed formal origin while remaining not deployed")
     check_pages()
     check_safety()
+    check_tool_source_alignment()
     check_sitemap_and_responsive_css()
     check_fake_visitor_paths()
     check_forbidden_public_claims()
     check_planning_contract()
     check_http_routes()
-    print("PASS_ALL_LOCAL_GATES candidate_origin_pending=true")
+    print("PASS_ALL_LOCAL_GATES candidate_origin=www.dealalliancehub.com deployment_pending=true")
 
 
 if __name__ == "__main__":

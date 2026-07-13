@@ -10,4 +10,4 @@ Disallow: /students/
 Disallow: /private/
 Disallow: /drafts/
 
-Sitemap: https://official-domain-pending.invalid/sitemap.xml
+Sitemap: https://www.dealalliancehub.com/sitemap.xml
