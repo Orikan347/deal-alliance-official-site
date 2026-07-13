@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 300" role="img" aria-label="成交聯盟工具箱標誌">
+  <defs>
+    <linearGradient id="blue" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0A84FF"/><stop offset=".48" stop-color="#0057D8"/><stop offset="1" stop-color="#123B8F"/></linearGradient>
+    <linearGradient id="metal" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F8FBFF"/><stop offset=".5" stop-color="#B9C7D9"/><stop offset="1" stop-color="#65758C"/></linearGradient>
+  </defs>
+  <rect x="0" y="74" width="256" height="184" rx="46" fill="url(#blue)"/>
+  <path d="M58 92V58c0-28 23-50 50-50h40c28 0 50 22 50 50v34" fill="none" stroke="url(#metal)" stroke-width="24" stroke-linecap="round"/>
+  <path d="M34 142h188" stroke="#6FC8FF" stroke-width="14" stroke-linecap="round"/>
+  <path d="M77 172l38 36 72-84" fill="none" stroke="#FFFFFF" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M188 62l12 26 26 12-26 12-12 26-12-26-26-12 26-12z" fill="#D7F2FF"/>
+  <rect x="97" y="220" width="62" height="54" rx="14" fill="url(#metal)" stroke="#FFFFFF" stroke-width="5"/>
+</svg>

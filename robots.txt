@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+Disallow: /login/
+Disallow: /admin/
+Disallow: /students/
+Disallow: /private/
+Disallow: /drafts/
+
+Sitemap: https://official-domain-pending.invalid/sitemap.xml
