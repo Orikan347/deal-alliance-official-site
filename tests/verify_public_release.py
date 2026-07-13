@@ -11,7 +11,9 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import subprocess
 import sys
+import tempfile
 from html.parser import HTMLParser
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, build_opener
@@ -28,6 +30,8 @@ PUBLIC_PATHS = [
     "/404.html", "/robots.txt", "/sitemap.xml", "/llms.txt",
 ]
 REQUIRED_HEADERS = ("content-security-policy", "x-content-type-options", "referrer-policy")
+PUBLIC_DOH_URL = "https://cloudflare-dns.com/dns-query"
+RESOLVER_MODES: set[str] = set()
 
 
 class MetaParser(HTMLParser):
@@ -55,9 +59,67 @@ class MetaParser(HTMLParser):
             self._collecting_json_ld = False
 
 
+class CurlResponse:
+    """Minimal response adapter for the public DNS-over-HTTPS fallback."""
+
+    def __init__(self, status: int, headers: dict[str, str], body: bytes, final_url: str) -> None:
+        self.status = status
+        self.headers = headers
+        self._body = body
+        self._final_url = final_url
+
+    def read(self) -> bytes:
+        return self._body
+
+    def geturl(self) -> str:
+        return self._final_url
+
+
+def get_via_public_doh(url: str) -> CurlResponse:
+    """Fetch through a public resolver when the local machine resolver is stale.
+
+    This remains read-only: curl performs a GET only, follows normal HTTPS
+    redirects, and never posts to the waitlist or any operator endpoint.
+    """
+    with tempfile.TemporaryDirectory(prefix="deal-alliance-release-gate-") as temporary_dir:
+        headers_path = f"{temporary_dir}/headers.txt"
+        body_path = f"{temporary_dir}/body.bin"
+        result = subprocess.run(
+            [
+                "curl", "--doh-url", PUBLIC_DOH_URL, "--location", "--silent", "--show-error",
+                "--max-time", "20", "--dump-header", headers_path, "--output", body_path,
+                "--write-out", "%{http_code}\\n%{url_effective}", url,
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode != 0:
+            raise URLError(f"public_doh_fetch_failed={result.stderr.strip()}")
+        output = result.stdout.splitlines()
+        if len(output) < 2 or not output[0].isdigit():
+            raise URLError("public_doh_fetch_missing_status")
+        raw_headers = open(headers_path, "r", encoding="utf-8", errors="replace").read()
+        header_blocks = [block for block in re.split(r"\\r?\\n\\r?\\n", raw_headers) if block.strip()]
+        final_block = next((block for block in reversed(header_blocks) if block.startswith("HTTP/")), "")
+        headers: dict[str, str] = {}
+        for line in final_block.splitlines()[1:]:
+            if ":" in line:
+                key, value = line.split(":", 1)
+                headers[key.lower()] = value.strip()
+        body = open(body_path, "rb").read()
+    RESOLVER_MODES.add("public_doh")
+    return CurlResponse(int(output[0]), headers, body, output[1])
+
+
 def get(opener, url: str):
     request = Request(url, headers={"User-Agent": "DealAllianceReleaseGate/1.0"})
-    return opener.open(request, timeout=15)
+    try:
+        response = opener.open(request, timeout=15)
+    except URLError:
+        return get_via_public_doh(url)
+    RESOLVER_MODES.add("system_dns")
+    return response
 
 
 def fail(message: str) -> None:
@@ -123,7 +185,8 @@ def main() -> int:
     if origin not in sitemap or sitemap.count("<loc>") != 15:
         fail("sitemap_origin_or_count_mismatch")
 
-    print(f"PASS_PUBLIC_RELEASE origin={origin} paths={checked} root_redirect=www crawler_assets=ok waitlist_post=not_performed")
+    resolver = "+".join(sorted(RESOLVER_MODES))
+    print(f"PASS_PUBLIC_RELEASE origin={origin} paths={checked} root_redirect=www crawler_assets=ok waitlist_post=not_performed resolver={resolver}")
     return 0
 
 
