@@ -9,11 +9,13 @@ site = json.loads((ROOT / "site.config.json").read_text(encoding="utf-8"))
 contract = json.loads((ROOT / "release_contract.json").read_text(encoding="utf-8"))
 catalog = json.loads((ROOT / "tools/catalog.json").read_text(encoding="utf-8"))
 
-if site.get("accountPortalStatus") != "STAGING_LIFECYCLE_READBACK_PASS_CTA_CANDIDATE_ENABLED_PENDING_USER_ACCEPTANCE":
-    raise SystemExit("FAIL_GOAL_READINESS account CTA is not at the verified candidate stage")
+if site.get("accountPortalStatus") != "PUBLIC_CTA_RELEASE_VERIFIED_PENDING_USER_ACCEPTANCE":
+    raise SystemExit("FAIL_GOAL_READINESS account CTA is not at the verified public-release stage")
 portal = contract.get("account_portal", {})
 if portal.get("mode") != "enabled" or portal.get("allowed_origins") != ["https://app.dealalliancehub.com"]:
     raise SystemExit("FAIL_GOAL_READINESS account portal no longer matches the approved boundary")
+if contract.get("status") != "PUBLIC_TECHNICAL_RELEASE_VERIFIED":
+    raise SystemExit("FAIL_GOAL_READINESS technical release evidence is missing")
 if not catalog or any(item.get("offer_status") not in {"WAITLIST_ONLY", "NOT_ENABLED"} for item in catalog):
     raise SystemExit("FAIL_GOAL_READINESS public catalog exposes an unapproved service")
 operational = contract.get("operational_readiness", {})
@@ -26,11 +28,11 @@ if not (ROOT / "tests" / "verify_public_release.py").exists():
 
 print(
     "PASS_GOAL_READINESS_AUDIT "
-    "visitor_understanding=candidate_ready "
-    "registration=candidate_ready "
+    "visitor_understanding=technical_release_verified "
+    "registration=public_release_verified "
     "authorized_services=waitlist_only "
     "seo_geo=technical_gate_ready "
     "operational=false "
     "monitoring=owner_pending "
-    "release=false"
+    "release=technical_verified"
 )

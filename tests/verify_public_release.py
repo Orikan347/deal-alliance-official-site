@@ -29,7 +29,16 @@ PUBLIC_PATHS = [
     "/resources/", "/faq/", "/waitlist/", "/privacy/", "/terms/",
     "/404.html", "/robots.txt", "/sitemap.xml", "/llms.txt",
 ]
+HIDDEN_PUBLIC_PATHS = ("/tools/life-number-calculator/",)
 REQUIRED_HEADERS = ("content-security-policy", "x-content-type-options", "referrer-policy")
+ACCOUNT_PORTAL_ORIGIN = "https://app.dealalliancehub.com"
+ACCOUNT_PORTAL_PATHS = ("/register", "/login")
+ACCOUNT_PORTAL_REQUIRED_HEADERS = {
+    "cache-control": "no-store",
+    "x-robots-tag": "noindex",
+    "x-content-type-options": "nosniff",
+    "referrer-policy": "no-referrer",
+}
 PUBLIC_DOH_URL = "https://cloudflare-dns.com/dns-query"
 RESOLVER_MODES: set[str] = set()
 
@@ -204,6 +213,36 @@ def main() -> int:
     if any(marker not in runtime_config for marker in required_account_portal_config):
         fail("account_portal_config_not_verified_candidate")
 
+    for path in HIDDEN_PUBLIC_PATHS:
+        try:
+            response = get(opener, origin + path)
+        except HTTPError as error:
+            if error.code == 404:
+                continue
+            fail(f"hidden_path={path} status={error.code}")
+        except (URLError, TimeoutError) as error:
+            fail(f"hidden_path={path} unreachable={error}")
+        fail(f"hidden_path={path} status={response.status}")
+
+    for path in ACCOUNT_PORTAL_PATHS:
+        try:
+            response = get(opener, ACCOUNT_PORTAL_ORIGIN + path)
+            body = response.read().decode("utf-8", "replace").lower()
+        except HTTPError as error:
+            fail(f"account_portal_path={path} status={error.code}")
+        except (URLError, TimeoutError) as error:
+            fail(f"account_portal_path={path} unreachable={error}")
+        if response.status != 200:
+            fail(f"account_portal_path={path} status={response.status}")
+        if "text/html" not in response.headers.get("content-type", "").lower():
+            fail(f"account_portal_path={path} content_type_not_html")
+        for header, required_value in ACCOUNT_PORTAL_REQUIRED_HEADERS.items():
+            actual_value = response.headers.get(header, "").lower()
+            if required_value not in actual_value:
+                fail(f"account_portal_path={path} missing_private_header={header}")
+        if "<form" in body or 'type="password"' in body or "type='password'" in body:
+            fail(f"account_portal_path={path} credential_form_present")
+
     sitemap_url = origin + "/sitemap.xml"
     try:
         sitemap = get(opener, sitemap_url).read().decode("utf-8", "replace")
@@ -214,7 +253,7 @@ def main() -> int:
         fail("sitemap_origin_or_count_mismatch")
 
     resolver = "+".join(sorted(RESOLVER_MODES))
-    print(f"PASS_PUBLIC_RELEASE origin={origin} paths={checked} root_redirect=www crawler_assets=ok account_portal_config=verified waitlist_post=not_performed resolver={resolver}")
+    print(f"PASS_PUBLIC_RELEASE origin={origin} paths={checked} hidden_paths=1 root_redirect=www crawler_assets=ok account_portal_config=verified account_portal_routes=2 private_headers=ok waitlist_post=not_performed resolver={resolver}")
     return 0
 
 

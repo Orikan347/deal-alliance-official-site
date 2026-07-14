@@ -25,5 +25,18 @@ if operational.get("missing_owner_inputs") != expected:
     raise SystemExit("FAIL_OPERATIONAL_READINESS missing-input checklist drift")
 if "not a formally operational service" not in operational.get("rule", ""):
     raise SystemExit("FAIL_OPERATIONAL_READINESS release boundary missing")
+template = ROOT / "公開營運資料確認表_待Owner填寫.md"
+required_template_sections = (
+    "對外營運主體",
+    "公開客服聯絡方式",
+    "隱私聯絡窗口",
+    "隱私政策版本與生效日",
+    "使用條款版本與生效日",
+    "服務地區與準據法偏好",
+    "首批公開資源",
+    "不要填帳密、token、客戶／學生資料、付款資料",
+)
+if not template.exists() or any(marker not in template.read_text(encoding="utf-8") for marker in required_template_sections):
+    raise SystemExit("FAIL_OPERATIONAL_READINESS owner input template is missing or unsafe")
 
-print(f"PASS_OPERATIONAL_READINESS_GUARD formal_operation=false owner_inputs_pending={len(expected)}")
+print(f"PASS_OPERATIONAL_READINESS_GUARD formal_operation=false owner_inputs_pending={len(expected)} template=ready")

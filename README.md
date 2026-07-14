@@ -9,7 +9,7 @@
 
 正式工具仍是候補／洽詢狀態；四個工具頁提供的只是瀏覽器本機假資料示範，不登入、不呼叫正式 API、不保存、不發送。
 
-公開正式來源為 `https://www.dealalliancehub.com`，根網域會導向 `www`。現行 live 19 條路由、SEO/GEO metadata、`llms.txt`、公開安全標頭與帳號入口 bootstrap 已以 HTTPS GET-only Gate 讀回；下一次受控發布候選後將為 18 條路由，且不再公開生涯運數計算器。候選設定僅允許 `https://app.dealalliancehub.com`，並只接受精確的 `/register`、`/login` 路徑；尚未受控發布，不能稱為正式公開註冊。
+公開正式來源為 `https://www.dealalliancehub.com`，根網域會導向 `www`。2026-07-14 已以 HTTPS GET-only Gate 讀回 18 條路由、SEO/GEO metadata、`llms.txt`、公開安全標頭與正式帳號 CTA runtime；生涯運數計算器不再公開。帳號入口只允許 `https://app.dealalliancehub.com` 的精確 `/register`、`/login` 路徑。這只證明安全純導向已發布，仍待使用者驗收，不能稱為正式對外註冊服務。
 
 候補收件契約已建立，但 `assets/site-config.js` 預設為 `disabled` 且沒有端點。只有正式 HTTPS 端點、Origin 白名單、隱私版本、保存／刪除規則與 receiver readback 全部核准後，才可切換為啟用。
 
@@ -53,6 +53,10 @@
 完整網站設計與上線 Gate：`網站完整規劃藍圖_2026-07-13.md`。
 
 逐項完成真相與主窗口順序：`正式營運完成度矩陣_2026-07-14.md`。
+
+Owner 可直接填寫的公開資料表：`公開營運資料確認表_待Owner填寫.md`。
+
+監控設定與回滾演練清單：`公開監控與回滾演練清單_2026-07-14.md`。
 
 正式推播前的主窗口交接文件：`公開推播前交接清單_2026-07-13.md`。
 

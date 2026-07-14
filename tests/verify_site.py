@@ -430,8 +430,8 @@ def main() -> None:
     config = json.loads((ROOT / "site.config.json").read_text(encoding="utf-8"))
     if config["candidateOrigin"] != ORIGIN or config["canonicalStatus"] not in {"OWNER_CONFIRMED_FORMAL_ORIGIN_NOT_DEPLOYED", "PUBLIC_ORIGIN_VERIFIED_AND_LIVE"}:
         fail("site config must use the formal origin and a known release status")
-    if config.get("accountPortalStatus") != "STAGING_LIFECYCLE_READBACK_PASS_CTA_CANDIDATE_ENABLED_PENDING_USER_ACCEPTANCE":
-        fail("site config must retain the staging-pass candidate-CTA account portal boundary")
+    if config.get("accountPortalStatus") != "PUBLIC_CTA_RELEASE_VERIFIED_PENDING_USER_ACCEPTANCE":
+        fail("site config must retain the public-release verified account portal boundary")
     check_pages()
     check_safety()
     check_tool_source_alignment()
@@ -443,7 +443,7 @@ def main() -> None:
     check_public_copy_integrity()
     check_planning_contract()
     check_http_routes()
-    print(f"PASS_ALL_LOCAL_GATES candidate_origin=www.dealalliancehub.com public_release_verified={str(config['canonicalStatus'] == 'PUBLIC_ORIGIN_VERIFIED_AND_LIVE').lower()} account_portal_candidate_enabled=true user_acceptance_pending=true")
+    print(f"PASS_ALL_LOCAL_GATES candidate_origin=www.dealalliancehub.com public_release_verified={str(config['canonicalStatus'] == 'PUBLIC_ORIGIN_VERIFIED_AND_LIVE').lower()} account_portal_public_release_verified=true user_acceptance_pending=true")
 
 
 if __name__ == "__main__":
