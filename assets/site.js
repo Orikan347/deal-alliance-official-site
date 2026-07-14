@@ -1,15 +1,19 @@
 document.addEventListener('DOMContentLoaded', () => {
   const config = window.DEAL_ALLIANCE_SITE_CONFIG || {};
-  const accountPortalUrlIsAllowed = (value) => {
+  const accountPortalUrlIsAllowed = (value, requiredPath) => {
     if (!value || config.accountPortalMode !== 'enabled') return false;
     let portal;
     try { portal = new URL(value, window.location.origin); } catch (_error) { return false; }
     if (portal.protocol !== 'https:' && portal.origin !== window.location.origin) return false;
+    // A public navigation link must never carry a credential, reset token, or
+    // arbitrary app route. The account app owns all sensitive state after this
+    // clean hand-off at one of its two documented entry paths.
+    if (portal.username || portal.password || portal.search || portal.hash || portal.pathname !== requiredPath) return false;
     const allowed = Array.isArray(config.accountPortalAllowedOrigins) ? config.accountPortalAllowedOrigins : [];
     return portal.origin === window.location.origin || allowed.includes(portal.origin);
   };
   const renderAccountPortalEntry = () => {
-    if (!accountPortalUrlIsAllowed(config.accountPortalRegisterUrl) || !accountPortalUrlIsAllowed(config.accountPortalLoginUrl)) return;
+    if (!accountPortalUrlIsAllowed(config.accountPortalRegisterUrl, '/register') || !accountPortalUrlIsAllowed(config.accountPortalLoginUrl, '/login')) return;
     document.querySelectorAll('.nav').forEach((nav) => {
       if (nav.querySelector('[data-account-portal]')) return;
       const register = document.createElement('a');
@@ -82,7 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
       if (!remoteEnabled) {
-        result.textContent = '目前仍是本機候選版：未送出任何資料，也沒有建立候補名單。';
+        result.textContent = '目前候補／洽詢收件尚未開放：未送出任何資料，也沒有建立候補名單。';
         return;
       }
       if (!form.reportValidity()) return;

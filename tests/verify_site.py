@@ -28,7 +28,6 @@ PUBLIC_ROUTES = [
     "/tools/line-automation/",
     "/tools/contact-converter/",
     "/tools/smart-close/",
-    "/tools/life-number-calculator/",
     "/resources/",
     "/faq/",
     "/waitlist/",
@@ -133,10 +132,14 @@ def check_safety() -> None:
     runtime_config = (ROOT / "assets/site-config.js").read_text(encoding="utf-8")
     if 'waitlistMode: "disabled"' not in runtime_config or 'waitlistEndpoint: ""' not in runtime_config:
         fail("waitlist: default runtime configuration must remain fail-closed")
-    if ('accountPortalMode: "disabled"' not in runtime_config
-            or 'accountPortalRegisterUrl: ""' not in runtime_config
-            or 'accountPortalLoginUrl: ""' not in runtime_config):
-        fail("account portal: default runtime configuration must remain fail-closed")
+    account_runtime_required = (
+        'accountPortalMode: "enabled"',
+        'accountPortalRegisterUrl: "https://app.dealalliancehub.com/register"',
+        'accountPortalLoginUrl: "https://app.dealalliancehub.com/login"',
+        'accountPortalAllowedOrigins: ["https://app.dealalliancehub.com"]',
+    )
+    if any(marker not in runtime_config for marker in account_runtime_required):
+        fail("account portal: candidate runtime configuration must use only the verified staging URLs")
     if "XMLHttpRequest" in js or "navigator.sendBeacon" in js or "if (!remoteEnabled)" not in js:
         fail("waitlist: remote submission is missing the fail-closed guard")
     account_portal_markers = (
@@ -145,6 +148,8 @@ def check_safety() -> None:
         "accountPortalAllowedOrigins",
         "data-account-portal",
         "portal.protocol !== 'https:'",
+        "portal.pathname !== requiredPath",
+        "portal.search || portal.hash",
     )
     if any(marker not in js for marker in account_portal_markers) or "fetch(config.accountPortal" in js:
         fail("account portal: must be guarded navigation only, never credential submission")
@@ -154,7 +159,7 @@ def check_safety() -> None:
     if contract.get("response", {}).get("success_status") != 202:
         fail("waitlist: readback contract must require HTTP 202")
     catalog = json.loads((ROOT / "tools/catalog.json").read_text(encoding="utf-8"))
-    expected_tools = {"follow-up-rhythm", "sms-suite", "line-automation", "contact-converter", "smart-close", "life-number-calculator"}
+    expected_tools = {"follow-up-rhythm", "sms-suite", "line-automation", "contact-converter", "smart-close"}
     if {item.get("slug") for item in catalog} != expected_tools:
         fail("tools: catalog must include all six confirmed tool positions")
     for item in catalog:
@@ -176,9 +181,21 @@ def check_safety() -> None:
             fail(f"robots: missing {required}")
     if "@type\":\"FAQPage" not in (ROOT / "faq/index.html").read_text(encoding="utf-8"):
         fail("faq: missing FAQPage schema")
-    if "@type\":\"SoftwareApplication" not in (ROOT / "tools/follow-up-rhythm/index.html").read_text(encoding="utf-8"):
-        fail("tool detail: missing SoftwareApplication schema")
-    print("PASS_PUBLIC_BOUNDARY local_form_no_submit=true default_endpoint_disabled=true account_portal_default_disabled=true tool_catalog=6")
+    for item in catalog:
+        detail_html = route_file(f"/tools/{item['slug']}/").read_text(encoding="utf-8")
+        schemas = [json.loads(raw) for raw in re.findall(r'<script type="application/ld\+json">(.*?)</script>', detail_html, re.S)]
+        if not any(schema.get("@type") == "WebPage" for schema in schemas):
+            fail(f"tool detail: {item['slug']} must expose a descriptive WebPage schema")
+        if any(
+            schema.get("@type") in {"SoftwareApplication", "Product", "Offer"}
+            or "isAccessibleForFree" in schema
+            or "offers" in schema
+            for schema in schemas
+        ):
+            fail(f"tool detail: {item['slug']} must not expose availability or pricing schema while waitlist-only")
+    if "/tools/life-number-calculator/" in (ROOT / "tools" / "index.html").read_text(encoding="utf-8"):
+        fail("tools: hidden life-number calculator must not be linked from the public tool index")
+    print("PASS_PUBLIC_BOUNDARY local_form_no_submit=true default_endpoint_disabled=true account_portal_candidate_enabled=true tool_catalog=5 waitlist_schema=descriptive_only hidden_tool=life-number-calculator")
 
 
 def check_tool_source_alignment() -> None:
@@ -219,8 +236,13 @@ def check_tool_source_alignment() -> None:
             fail(f"tools: release status evidence lacks public label {product_id}")
 
     catalog = {item.get("product_id"): item for item in json.loads((ROOT / "tools/catalog.json").read_text(encoding="utf-8"))}
+    hidden_public_products = {"life_number_calculator"}
     for product_id, item in evidence.items():
         public_item = catalog.get(product_id)
+        if product_id in hidden_public_products:
+            if public_item:
+                fail(f"tools: hidden product remains in public catalog {product_id}")
+            continue
         if not public_item:
             fail(f"tools: public catalog lacks evidence product {product_id}")
         for field in ("offer_status", "status_label", "summary", "platform"):
@@ -252,6 +274,9 @@ def check_sitemap_and_responsive_css() -> None:
     expected = [ORIGIN + route for route in PUBLIC_ROUTES]
     if locations != expected:
         fail("sitemap: public route list is incomplete or not in expected order")
+    lastmods = [node.text for node in tree.findall("sm:url/sm:lastmod", namespace)]
+    if len(lastmods) != len(locations) or any(not re.fullmatch(r"\d{4}-\d{2}-\d{2}", value or "") for value in lastmods):
+        fail("sitemap: every public route must carry an ISO lastmod")
     css = (ROOT / "assets/styles.css").read_text(encoding="utf-8")
     responsive_checks = (
         (r"@media\s*\(max-width:\s*(760|860)px\)", "responsive breakpoint"),
@@ -269,7 +294,7 @@ def check_sitemap_and_responsive_css() -> None:
     social_card = ROOT / "assets/og-card.png"
     if not social_card.exists() or social_card.read_bytes()[:8] != b"\x89PNG\r\n\x1a\n":
         fail("share card PNG is missing or invalid")
-    print(f"PASS_SITEMAP_AND_MOBILE sitemap_urls={len(locations)}")
+    print(f"PASS_SITEMAP_AND_MOBILE sitemap_urls={len(locations)} lastmod=complete")
 
 
 def check_llms_discovery_document() -> None:
@@ -291,7 +316,10 @@ def check_llms_discovery_document() -> None:
 
 
 def check_account_portal_bootstrap() -> None:
-    for route in [*PUBLIC_ROUTES, "/404.html"]:
+    # A visitor can reach an account entry from every public page, including
+    # a noindex search empty state and a 404 recovery page.
+    portal_routes = [*PUBLIC_ROUTES, "/404.html", "/search/"]
+    for route in portal_routes:
         source_html, _ = read_page(route)
         if route == "/404.html":
             dist_path = ROOT / "dist/404.html"
@@ -305,7 +333,9 @@ def check_account_portal_bootstrap() -> None:
             site_index = html.find('src="/assets/site.js"')
             if config_index < 0 or site_index < 0 or config_index > site_index:
                 fail(f"account portal: {label} {route} must load runtime config before site.js")
-    print(f"PASS_ACCOUNT_PORTAL_BOOTSTRAP pages={len(PUBLIC_ROUTES) + 1} artifacts=source+dist")
+            if 'class="nav' not in html:
+                fail(f"account portal: {label} {route} must expose a navigation container")
+    print(f"PASS_ACCOUNT_PORTAL_BOOTSTRAP pages={len(portal_routes)} artifacts=source+dist nav=all")
 
 
 def check_fake_visitor_paths() -> None:
@@ -329,7 +359,7 @@ def check_fake_visitor_paths() -> None:
     if fake_payload["contact"] in waitlist_html:
         fail("fake payload unexpectedly persisted in the candidate HTML")
     js = (ROOT / "assets/site.js").read_text(encoding="utf-8")
-    if "目前仍是本機候選版" not in js or "preventDefault" not in js:
+    if "目前候補／洽詢收件尚未開放" not in js or "preventDefault" not in js:
         fail("local form fail-closed simulation contract is missing")
     if "第 ${invalid + 1} 行格式不正確" not in js:
         fail("contact converter: malformed fake rows must fail visibly")
@@ -344,6 +374,16 @@ def check_forbidden_public_claims() -> None:
             if phrase in text:
                 fail(f"{path.relative_to(ROOT)}: forbidden public claim {phrase}")
     print("PASS_PUBLIC_CLAIM_SCAN forbidden_terms=0")
+
+
+def check_public_copy_integrity() -> None:
+    """Prevent a released candidate from contradicting its safe account CTA."""
+    for route in [*PUBLIC_ROUTES, "/404.html", "/search/"]:
+        html, _ = read_page(route)
+        for phrase in ("候選站 v1", "公開候選站", "本候選站", "不提供登入", "沒有登入、註冊", "未啟用帳號"):
+            if phrase in html:
+                fail(f"public copy: {route} contains stale or contradictory phrase {phrase}")
+    print("PASS_PUBLIC_COPY_INTEGRITY routes=16 account_portal_language=consistent")
 
 
 def check_planning_contract() -> None:
@@ -390,8 +430,8 @@ def main() -> None:
     config = json.loads((ROOT / "site.config.json").read_text(encoding="utf-8"))
     if config["candidateOrigin"] != ORIGIN or config["canonicalStatus"] not in {"OWNER_CONFIRMED_FORMAL_ORIGIN_NOT_DEPLOYED", "PUBLIC_ORIGIN_VERIFIED_AND_LIVE"}:
         fail("site config must use the formal origin and a known release status")
-    if config.get("accountPortalStatus") != "CONTRACT_READY_URL_PENDING":
-        fail("site config must retain the account portal contract-pending boundary")
+    if config.get("accountPortalStatus") != "STAGING_LIFECYCLE_READBACK_PASS_CTA_CANDIDATE_ENABLED_PENDING_USER_ACCEPTANCE":
+        fail("site config must retain the staging-pass candidate-CTA account portal boundary")
     check_pages()
     check_safety()
     check_tool_source_alignment()
@@ -400,9 +440,10 @@ def main() -> None:
     check_account_portal_bootstrap()
     check_fake_visitor_paths()
     check_forbidden_public_claims()
+    check_public_copy_integrity()
     check_planning_contract()
     check_http_routes()
-    print(f"PASS_ALL_LOCAL_GATES candidate_origin=www.dealalliancehub.com public_release_verified={str(config['canonicalStatus'] == 'PUBLIC_ORIGIN_VERIFIED_AND_LIVE').lower()} registration_pending=true")
+    print(f"PASS_ALL_LOCAL_GATES candidate_origin=www.dealalliancehub.com public_release_verified={str(config['canonicalStatus'] == 'PUBLIC_ORIGIN_VERIFIED_AND_LIVE').lower()} account_portal_candidate_enabled=true user_acceptance_pending=true")
 
 
 if __name__ == "__main__":

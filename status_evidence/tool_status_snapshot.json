@@ -3,7 +3,7 @@
   "captured_on": "2026-07-14",
   "source": {
     "path": "400_桌面程式優化/工具整合狀態表.md",
-    "sha256": "d41e094598f4f0f492f3ab862edd166a59da62e55f48b9dc6bc237c3b00f77b0"
+    "sha256": "6521462fe7b4be5ef1f32b3cf727b630b397733eda5fd7a34b93a8ff3febb99c"
   },
   "tools": [
     {
@@ -20,7 +20,7 @@
       "offer_status": "WAITLIST_ONLY",
       "status_label": "候補中・不可下載，V4 實機驗收中",
       "public_summary": "協助整理 LINE 訊息流程與發送前確認；不在公開站登入或發送。",
-      "public_platform": "編譯式 V4 候選僅通過掃描與假資料 Gate；GUI／不發送、重簽與公證待完成"
+      "public_platform": "編譯式 V4 候選已完成假資料與 GUI 不發送驗收；尚待 staging 授權、重簽與公證"
     },
     {
       "product_id": "contact_converter",

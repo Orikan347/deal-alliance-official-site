@@ -25,7 +25,7 @@ PUBLIC_PATHS = [
     "/", "/about/", "/solutions/", "/tools/",
     "/tools/follow-up-rhythm/", "/tools/sms-suite/",
     "/tools/line-automation/", "/tools/contact-converter/",
-    "/tools/smart-close/", "/tools/life-number-calculator/",
+    "/tools/smart-close/",
     "/resources/", "/faq/", "/waitlist/", "/privacy/", "/terms/",
     "/404.html", "/robots.txt", "/sitemap.xml", "/llms.txt",
 ]
@@ -191,16 +191,30 @@ def main() -> int:
             if "official-domain-pending.invalid" in body:
                 fail(f"path={path} placeholder_origin_present")
 
+    try:
+        runtime_config = get(opener, origin + "/assets/site-config.js").read().decode("utf-8", "replace")
+    except (HTTPError, URLError, TimeoutError) as error:
+        fail(f"account_portal_config_unreachable={error}")
+    required_account_portal_config = (
+        'accountPortalMode: "enabled"',
+        'accountPortalRegisterUrl: "https://app.dealalliancehub.com/register"',
+        'accountPortalLoginUrl: "https://app.dealalliancehub.com/login"',
+        'accountPortalAllowedOrigins: ["https://app.dealalliancehub.com"]',
+    )
+    if any(marker not in runtime_config for marker in required_account_portal_config):
+        fail("account_portal_config_not_verified_candidate")
+
     sitemap_url = origin + "/sitemap.xml"
     try:
         sitemap = get(opener, sitemap_url).read().decode("utf-8", "replace")
     except (HTTPError, URLError, TimeoutError) as error:
         fail(f"sitemap_unreachable={error}")
-    if origin not in sitemap or sitemap.count("<loc>") != 15:
+    expected_sitemap_urls = sum(1 for path in PUBLIC_PATHS if path.endswith("/"))
+    if origin not in sitemap or sitemap.count("<loc>") != expected_sitemap_urls:
         fail("sitemap_origin_or_count_mismatch")
 
     resolver = "+".join(sorted(RESOLVER_MODES))
-    print(f"PASS_PUBLIC_RELEASE origin={origin} paths={checked} root_redirect=www crawler_assets=ok waitlist_post=not_performed resolver={resolver}")
+    print(f"PASS_PUBLIC_RELEASE origin={origin} paths={checked} root_redirect=www crawler_assets=ok account_portal_config=verified waitlist_post=not_performed resolver={resolver}")
     return 0
 
 

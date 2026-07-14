@@ -6,7 +6,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 contract = json.loads((ROOT / "release_contract.json").read_text(encoding="utf-8"))
-if contract["status"] not in {"PENDING_EXTERNAL_RELEASE", "PUBLIC_RELEASE_VERIFIED_PENDING_REGISTRATION"}:
+if contract["status"] not in {"PENDING_EXTERNAL_RELEASE", "PUBLIC_RELEASE_VERIFIED_PENDING_REGISTRATION", "PUBLIC_RELEASE_VERIFIED_STAGING_ACCOUNT_LIFECYCLE_PASS_CTA_CANDIDATE_ENABLED_PENDING_USER_ACCEPTANCE"}:
     raise SystemExit("FAIL_RELEASE_CONTRACT status is unknown")
 if contract["origin"] != "https://www.dealalliancehub.com":
     raise SystemExit("FAIL_RELEASE_CONTRACT origin must be the owner-confirmed formal origin")
@@ -29,14 +29,38 @@ waitlist = contract["waitlist"]
 if waitlist["success_status"] != 202 or waitlist["accepted_status"] != "received" or waitlist["public_list_endpoint"]:
     raise SystemExit("FAIL_RELEASE_CONTRACT unsafe waitlist contract")
 account_portal = contract["account_portal"]
-if account_portal["status"] != "CONTRACT_READY_URL_PENDING" or account_portal["mode"] != "disabled" or account_portal["allowed_origins"]:
+if (account_portal["status"] != "STAGING_LIFECYCLE_READBACK_PASS_CTA_CANDIDATE_ENABLED_PENDING_USER_ACCEPTANCE"
+        or account_portal["mode"] != "enabled"
+        or account_portal["allowed_origins"] != ["https://app.dealalliancehub.com"]
+        or account_portal["approved_origin"] != "https://app.dealalliancehub.com"
+        or account_portal["register_url"] != "https://app.dealalliancehub.com/register"
+        or account_portal["login_url"] != "https://app.dealalliancehub.com/login"
+        or account_portal["register_url_status"] != "HTTPS_200_PRIVATE_STAGING_READBACK_PASS"
+        or account_portal["login_url_status"] != "HTTPS_200_PRIVATE_STAGING_READBACK_PASS"
+        or account_portal["public_entry_status"] != "CANDIDATE_CTA_ENABLED_STAGING_ONLY_NO_CREDENTIAL_FORMS"
+        or account_portal["lifecycle_status"] != "STAGING_OAUTH_READBACK_PASS"):
     raise SystemExit("FAIL_RELEASE_CONTRACT unsafe account portal contract")
 if account_portal["public_site_behavior"] != "safe_https_register_and_login_links_only_no_credentials_or_session":
     raise SystemExit("FAIL_RELEASE_CONTRACT account portal boundary is incomplete")
-for key in ("http_status", "security_headers", "canonical_origin", "sitemap", "waitlist_readback"):
+for key in ("http_status", "security_headers", "canonical_origin", "sitemap", "waitlist_readback", "account_portal_private_headers"):
     if key not in contract["monitoring"]["checks"]:
         raise SystemExit(f"FAIL_RELEASE_CONTRACT missing monitoring check={key}")
+operational = contract.get("operational_readiness", {})
+required_owner_inputs = {
+    "legal_entity_name",
+    "public_support_email",
+    "privacy_contact",
+    "privacy_policy_version_and_effective_date",
+    "terms_version_and_effective_date",
+    "service_region_and_governing_law",
+    "first_public_resources_with_author_source_and_date",
+}
+if (operational.get("status") != "PENDING_OWNER_PUBLIC_LEGAL_AND_SUPPORT"
+        or operational.get("release_ready") is not False
+        or set(operational.get("missing_owner_inputs", [])) != required_owner_inputs
+        or "not a formally operational service" not in operational.get("rule", "")):
+    raise SystemExit("FAIL_RELEASE_CONTRACT operational readiness boundary is incomplete")
 if not contract["rollback"]["artifact"] or not contract["rollback"]["trigger"]:
     raise SystemExit("FAIL_RELEASE_CONTRACT rollback is incomplete")
 public_verified = contract["origin_status"] == "PUBLIC_HTTPS_READBACK_VERIFIED"
-print(f"PASS_RELEASE_CONTRACT paths={len(contract['required_public_paths'])} monitoring={len(contract['monitoring']['checks'])} public_release_verified={str(public_verified).lower()} registration_pending=true")
+print(f"PASS_RELEASE_CONTRACT paths={len(contract['required_public_paths'])} monitoring={len(contract['monitoring']['checks'])} public_release_verified={str(public_verified).lower()} account_lifecycle=staging_pass cta=candidate_enabled_pending_user_acceptance operational_release_ready=false owner_inputs_pending={len(required_owner_inputs)}")
