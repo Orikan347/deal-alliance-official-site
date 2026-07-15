@@ -7,7 +7,7 @@ set -euo pipefail
 rm -rf dist
 mkdir -p dist
 
-for item in 404.html _headers index.html llms.txt robots.txt sitemap.xml; do
+for item in 404.html _headers _routes.json index.html llms.txt robots.txt sitemap.xml; do
   cp "$item" dist/
 done
 

@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "include": [
+    "/tools/life-number-calculator",
+    "/tools/life-number-calculator/*",
+    "/tools/follow-up-rhythm",
+    "/tools/follow-up-rhythm/*"
+  ],
+  "exclude": []
+}
