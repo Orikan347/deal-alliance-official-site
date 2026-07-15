@@ -1,8 +1,8 @@
 {
   "siteName": "成交聯盟 Deal Alliance",
   "candidateOrigin": "https://www.dealalliancehub.com",
-  "canonicalStatus": "PAGES_PRODUCTION_READBACK_PASS_FORMAL_DOMAIN_DNS_PENDING",
-  "candidateContentReleaseStatus": "PAGES_PRODUCTION_READBACK_PASS_FORMAL_ORIGIN_PENDING",
+  "canonicalStatus": "PUBLIC_ORIGIN_VERIFIED_AND_LIVE",
+  "candidateContentReleaseStatus": "PUBLIC_ORIGIN_READBACK_PASS_OPERATIONAL_PENDING",
   "language": "zh-Hant-TW",
   "lastReviewed": "2026-07-15",
   "publicBoundary": "公開站只負責介紹、資源與安全導向；註冊／登入由核准的後台入口承接，官網不處理密碼、session、學生、管理、授權或真實帳務資料。",

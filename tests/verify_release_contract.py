@@ -36,14 +36,14 @@ if (not public_gate.exists()
     raise SystemExit("FAIL_RELEASE_CONTRACT public readback gate is stale for this content release")
 candidate_content = contract.get("candidate_content_release", {})
 candidate_reason = candidate_content.get("reason", "")
-if (candidate_content.get("status") != "PAGES_PRODUCTION_READBACK_PASS_FORMAL_ORIGIN_PENDING"
+if (candidate_content.get("status") != "PUBLIC_ORIGIN_READBACK_PASS_OPERATIONAL_PENDING"
         or candidate_content.get("revision") != "PRODUCT_PLATFORM_20260715"
         or "/tools/life-number-calculator/" not in candidate_reason
         or "/tools/follow-up-rhythm/" not in candidate_reason
         or "return 404" not in candidate_reason
-        or len(candidate_content.get("required_before_status_change", [])) != 3
+        or len(candidate_content.get("completed_checks", [])) != 4
+        or len(candidate_content.get("remaining_before_operational_release", [])) != 3
         or set(candidate_content.get("forbidden_until_verified", [])) != {
-            "claiming the formal www origin is live",
             "enabling receiver",
             "enabling payment, download or real tool actions",
         }):
@@ -106,5 +106,5 @@ if (operational.get("status") != "PENDING_OWNER_PUBLIC_LEGAL_AND_SUPPORT"
 if not contract["rollback"]["artifact"] or not contract["rollback"]["trigger"]:
     raise SystemExit("FAIL_RELEASE_CONTRACT rollback is incomplete")
 formal_origin_verified = contract["origin_status"] == "PUBLIC_HTTPS_READBACK_VERIFIED"
-pages_production_deployed = contract["status"] == "PAGES_PRODUCTION_DEPLOYED_FORMAL_DOMAIN_PENDING"
+pages_production_deployed = contract["status"] in {"PAGES_PRODUCTION_DEPLOYED_FORMAL_DOMAIN_PENDING", "PUBLIC_TECHNICAL_RELEASE_VERIFIED"}
 print(f"PASS_RELEASE_CONTRACT paths={len(contract['required_public_paths'])} monitoring={len(contract['monitoring']['checks'])} pages_production_deployed={str(pages_production_deployed).lower()} formal_origin_verified={str(formal_origin_verified).lower()} account_lifecycle=public_registration_deployed_pending_email_readback cta=live_app_registration_form operational_release_ready=false owner_inputs_pending={len(required_owner_inputs)}")

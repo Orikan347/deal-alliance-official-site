@@ -241,7 +241,11 @@ def main() -> int:
         except (URLError, TimeoutError) as error:
             hidden_path_failures.append(f"{path}:unreachable={error}")
         else:
-            hidden_path_failures.append(f"{path}:status={response.status}")
+            # Cloudflare Pages Functions return an ordinary response object for
+            # an intentional 404, whereas urllib raises HTTPError for a static
+            # 404. Both mean the retired route is correctly absent.
+            if response.status != 404:
+                hidden_path_failures.append(f"{path}:status={response.status}")
     if hidden_path_failures:
         fail("hidden_paths=" + ",".join(hidden_path_failures))
 

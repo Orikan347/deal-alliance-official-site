@@ -507,8 +507,8 @@ def main() -> None:
         fail("site config must use the formal origin and a known release status")
     if config.get("accountPortalStatus") != "PUBLIC_CTA_LIVE_REGISTRATION_FORM_PENDING_EMAIL_READBACK":
         fail("site config must retain the public-release verified account portal boundary")
-    if config.get("candidateContentReleaseStatus") != "PAGES_PRODUCTION_READBACK_PASS_FORMAL_ORIGIN_PENDING":
-        fail("site config must distinguish the live origin from the pending content artifact")
+    if config.get("candidateContentReleaseStatus") not in {"PAGES_PRODUCTION_READBACK_PASS_FORMAL_ORIGIN_PENDING", "PUBLIC_ORIGIN_READBACK_PASS_OPERATIONAL_PENDING"}:
+        fail("site config must declare a known public-origin content state")
     check_pages()
     check_brand_entity_schema()
     check_safety()
@@ -522,7 +522,7 @@ def main() -> None:
     check_source_backed_student_copy()
     check_planning_contract()
     check_http_routes()
-    print(f"PASS_ALL_LOCAL_GATES candidate_origin=www.dealalliancehub.com origin_live={str(config['canonicalStatus'] == 'PUBLIC_ORIGIN_VERIFIED_AND_LIVE').lower()} candidate_content_deployed=false account_portal_public_release_verified=true user_acceptance_pending=true")
+    print(f"PASS_ALL_LOCAL_GATES candidate_origin=www.dealalliancehub.com origin_live={str(config['canonicalStatus'] == 'PUBLIC_ORIGIN_VERIFIED_AND_LIVE').lower()} candidate_content_deployed={str(config['candidateContentReleaseStatus'] == 'PUBLIC_ORIGIN_READBACK_PASS_OPERATIONAL_PENDING').lower()} account_portal_public_release_verified=true user_acceptance_pending=true")
 
 
 if __name__ == "__main__":
