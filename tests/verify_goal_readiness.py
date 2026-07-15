@@ -14,10 +14,10 @@ if site.get("accountPortalStatus") != "PUBLIC_CTA_LIVE_REGISTRATION_FORM_PENDING
 portal = contract.get("account_portal", {})
 if portal.get("mode") != "enabled" or portal.get("allowed_origins") != ["https://app.dealalliancehub.com"]:
     raise SystemExit("FAIL_GOAL_READINESS account portal no longer matches the approved boundary")
-if contract.get("status") != "PUBLIC_TECHNICAL_RELEASE_VERIFIED":
+if contract.get("status") != "PAGES_PRODUCTION_DEPLOYED_FORMAL_DOMAIN_PENDING":
     raise SystemExit("FAIL_GOAL_READINESS technical release evidence is missing")
 candidate_content = contract.get("candidate_content_release", {})
-if candidate_content.get("status") != "PENDING_CONTROLLED_RELEASE_PUBLIC_READBACK":
+if candidate_content.get("status") != "PAGES_PRODUCTION_READBACK_PASS_FORMAL_ORIGIN_PENDING":
     raise SystemExit("FAIL_GOAL_READINESS candidate content release state is inconsistent")
 if not catalog or any(item.get("offer_status") not in {"WAITLIST_ONLY", "NOT_ENABLED"} for item in catalog):
     raise SystemExit("FAIL_GOAL_READINESS public catalog exposes an unapproved service")
@@ -31,11 +31,11 @@ if not (ROOT / "tests" / "verify_public_release.py").exists():
 
 print(
     "PASS_GOAL_READINESS_AUDIT "
-    "visitor_understanding=candidate_content_pending_public_readback "
+    "visitor_understanding=pages_production_deployed_formal_origin_pending "
     "registration=public_form_live_pending_email_readback "
     "authorized_services=none_public_account_navigation_only "
     "seo_geo=technical_gate_ready "
     "operational=false "
     "monitoring=owner_pending "
-    "origin=technical_verified candidate_content=not_deployed"
+    "origin=formal_domain_pending candidate_content=pages_production_deployed"
 )

@@ -6,11 +6,11 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 contract = json.loads((ROOT / "release_contract.json").read_text(encoding="utf-8"))
-if contract["status"] not in {"PENDING_EXTERNAL_RELEASE", "PUBLIC_RELEASE_VERIFIED_PENDING_REGISTRATION", "PUBLIC_RELEASE_VERIFIED_STAGING_ACCOUNT_LIFECYCLE_PASS_CTA_CANDIDATE_ENABLED_PENDING_USER_ACCEPTANCE", "PUBLIC_RELEASE_VERIFIED_CTA_LIVE_PENDING_USER_ACCEPTANCE", "PUBLIC_TECHNICAL_RELEASE_VERIFIED"}:
+if contract["status"] not in {"PENDING_EXTERNAL_RELEASE", "PUBLIC_RELEASE_VERIFIED_PENDING_REGISTRATION", "PUBLIC_RELEASE_VERIFIED_STAGING_ACCOUNT_LIFECYCLE_PASS_CTA_CANDIDATE_ENABLED_PENDING_USER_ACCEPTANCE", "PUBLIC_RELEASE_VERIFIED_CTA_LIVE_PENDING_USER_ACCEPTANCE", "PUBLIC_TECHNICAL_RELEASE_VERIFIED", "PAGES_PRODUCTION_DEPLOYED_FORMAL_DOMAIN_PENDING"}:
     raise SystemExit("FAIL_RELEASE_CONTRACT status is unknown")
 if contract["origin"] != "https://www.dealalliancehub.com":
     raise SystemExit("FAIL_RELEASE_CONTRACT origin must be the owner-confirmed formal origin")
-if contract["origin_status"] not in {"OWNER_CONFIRMED_NOT_DEPLOYED", "PUBLIC_HTTPS_READBACK_VERIFIED"}:
+if contract["origin_status"] not in {"OWNER_CONFIRMED_NOT_DEPLOYED", "PUBLIC_HTTPS_READBACK_VERIFIED", "PAGES_PRODUCTION_READBACK_PASS_FORMAL_DOMAIN_DNS_PENDING"}:
     raise SystemExit("FAIL_RELEASE_CONTRACT origin status is unknown")
 workflow = contract["deployment_workflow"]
 workflow_path = ROOT / workflow["path"]
@@ -20,7 +20,7 @@ if (workflow.get("provider") != "Cloudflare Pages"
         or workflow.get("build_command") != "bash scripts/build-public.sh"
         or workflow.get("output_directory") != "dist"
         or workflow.get("production_branch") != "agent/official-site-v1"
-        or workflow.get("deployed_commit") != "2cf21d6"
+        or workflow.get("deployed_commit") != "3d46756"
         or workflow.get("preceding_release_commit") != "38ad43a"):
     raise SystemExit("FAIL_RELEASE_CONTRACT public technical release provenance is incomplete")
 public_gate = ROOT / "tests/verify_public_release.py"
@@ -36,14 +36,14 @@ if (not public_gate.exists()
     raise SystemExit("FAIL_RELEASE_CONTRACT public readback gate is stale for this content release")
 candidate_content = contract.get("candidate_content_release", {})
 candidate_reason = candidate_content.get("reason", "")
-if (candidate_content.get("status") != "PENDING_CONTROLLED_RELEASE_PUBLIC_READBACK"
+if (candidate_content.get("status") != "PAGES_PRODUCTION_READBACK_PASS_FORMAL_ORIGIN_PENDING"
         or candidate_content.get("revision") != "PRODUCT_PLATFORM_20260715"
         or "/tools/life-number-calculator/" not in candidate_reason
         or "/tools/follow-up-rhythm/" not in candidate_reason
         or "return 404" not in candidate_reason
         or len(candidate_content.get("required_before_status_change", [])) != 3
         or set(candidate_content.get("forbidden_until_verified", [])) != {
-            "claiming this content rebuild is live",
+            "claiming the formal www origin is live",
             "enabling receiver",
             "enabling payment, download or real tool actions",
         }):
@@ -105,5 +105,6 @@ if (operational.get("status") != "PENDING_OWNER_PUBLIC_LEGAL_AND_SUPPORT"
     raise SystemExit("FAIL_RELEASE_CONTRACT operational readiness boundary is incomplete")
 if not contract["rollback"]["artifact"] or not contract["rollback"]["trigger"]:
     raise SystemExit("FAIL_RELEASE_CONTRACT rollback is incomplete")
-public_verified = contract["origin_status"] == "PUBLIC_HTTPS_READBACK_VERIFIED"
-print(f"PASS_RELEASE_CONTRACT paths={len(contract['required_public_paths'])} monitoring={len(contract['monitoring']['checks'])} origin_technical_release_verified={str(public_verified).lower()} candidate_content_deployed=false account_lifecycle=public_registration_deployed_pending_email_readback cta=live_app_registration_form operational_release_ready=false owner_inputs_pending={len(required_owner_inputs)}")
+formal_origin_verified = contract["origin_status"] == "PUBLIC_HTTPS_READBACK_VERIFIED"
+pages_production_deployed = contract["status"] == "PAGES_PRODUCTION_DEPLOYED_FORMAL_DOMAIN_PENDING"
+print(f"PASS_RELEASE_CONTRACT paths={len(contract['required_public_paths'])} monitoring={len(contract['monitoring']['checks'])} pages_production_deployed={str(pages_production_deployed).lower()} formal_origin_verified={str(formal_origin_verified).lower()} account_lifecycle=public_registration_deployed_pending_email_readback cta=live_app_registration_form operational_release_ready=false owner_inputs_pending={len(required_owner_inputs)}")

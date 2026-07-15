@@ -503,11 +503,11 @@ def check_http_routes() -> None:
 
 def main() -> None:
     config = json.loads((ROOT / "site.config.json").read_text(encoding="utf-8"))
-    if config["candidateOrigin"] != ORIGIN or config["canonicalStatus"] not in {"OWNER_CONFIRMED_FORMAL_ORIGIN_NOT_DEPLOYED", "PUBLIC_ORIGIN_VERIFIED_AND_LIVE"}:
+    if config["candidateOrigin"] != ORIGIN or config["canonicalStatus"] not in {"OWNER_CONFIRMED_FORMAL_ORIGIN_NOT_DEPLOYED", "PUBLIC_ORIGIN_VERIFIED_AND_LIVE", "PAGES_PRODUCTION_READBACK_PASS_FORMAL_DOMAIN_DNS_PENDING"}:
         fail("site config must use the formal origin and a known release status")
     if config.get("accountPortalStatus") != "PUBLIC_CTA_LIVE_REGISTRATION_FORM_PENDING_EMAIL_READBACK":
         fail("site config must retain the public-release verified account portal boundary")
-    if config.get("candidateContentReleaseStatus") != "PENDING_CONTROLLED_RELEASE_PUBLIC_READBACK":
+    if config.get("candidateContentReleaseStatus") != "PAGES_PRODUCTION_READBACK_PASS_FORMAL_ORIGIN_PENDING":
         fail("site config must distinguish the live origin from the pending content artifact")
     check_pages()
     check_brand_entity_schema()
