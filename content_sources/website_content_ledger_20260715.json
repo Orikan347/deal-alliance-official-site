@@ -1,0 +1,58 @@
+{
+  "schema_version": "DA_PUBLIC_COPY_LEDGER_V1",
+  "reviewed_on": "2026-07-15",
+  "audience": {
+    "primary": "想把成交能力與工作效率做成系統的銷售工作者與企業團隊",
+    "secondary": "已加入後需由帳號入口使用已開放工具的學員",
+    "not_for": "部署、簽章、安全驗收或工程狀態的審查人員"
+  },
+  "brand_foundation": {
+    "source": ["/Users/macminim4/Desktop/Claude cowork/泰欣官網taixin-website/index.html#philosophy-method", "/Users/macminim4/Desktop/Claude cowork/泰欣官網taixin-website/jizhixiaolv.html#course-hero-and-closing", "/Users/macminim4/Desktop/Claude cowork/泰欣官網taixin-website/blog/client-just-looking-response/index.html#closing"],
+    "mission": "讓所有銷售人員都能擁有時間、身體、家庭。",
+    "vision": "五年內培養 100 位 Top Sales。",
+    "method": "心理學、哲學、商業思維與大腦科學融合成可複製、可落地的人性成交系統。",
+    "culture_values": [
+      "人性：先理解人與他在乎的事，不把成交縮成背話術。",
+      "系統：把一線經驗整理為可練習、可複盤、可落地的流程。",
+      "效率：不以盲目加班交換業績，把時間、健康與陪伴留回生活。"
+    ]
+  },
+  "product_story_rule": {
+    "source": "/Users/macminim4/Desktop/Claude cowork/TaixinMemoryHub/references/成交地圖共用母版.md#產品介紹節點的口語順序",
+    "order": ["Mini Yes", "Benefit", "Advantage", "Feature"],
+    "prohibited_opening": ["功能清單", "內部術語", "發布驗收狀態"]
+  },
+  "public_copy_boundary": {
+    "technical_release_terms_are_internal_only": ["Apple Gate", "DMG", "staging", "R02", "功能驗收", "本機示範"],
+    "availability_statement": "工具頁只用簡短狀態說明是否開放；詳細發行、安全與授權驗收留在內部文件。"
+  },
+  "product_platform_direction_20260715": {
+    "approved_direction": "成交聯盟是工具產品平台；對外只說工作困擾、使用者利益與已驗證工具能力。MBAF 只作內部文案順序，不在訪客頁介紹。",
+    "homepage_promise": "把成交工作整理好，把時間留給真正重要的人。",
+    "tool_story_boundary": "工具協助整理、預覽、確認與停止；不替人判斷、答應、建立信任或操控成交。",
+    "forbidden_public_positioning": ["課程", "學習路徑", "成交地圖", "DISC", "MBAF", "Top Sales"],
+    "source": "使用者於 2026-07-15 明確更正：成交聯盟與課程無關，是工具產品；MBAF 只用於內部產品文案。"
+  },
+  "products": {
+    "sms_suite": {
+      "source": "/Users/macminim4/Desktop/Claude cowork/生日簡訊程式/99_開發資料_不要交付/私有候選/NativeMacCandidate/ReleaseAssets/成交聯盟簡訊工具_Mac_使用說明.md",
+      "verified_capabilities": ["讀取使用者主動授權的生日或群組資料", "稱呼與訊息模板", "逐筆預覽與跳過原因", "再次確認後才發送", "每位收件人確認與停止後續發送", "近期防重複"]
+    },
+    "line_automation": {
+      "source": "/Users/macminim4/Desktop/Claude cowork/LINE自動發訊息封包/內部工作資料/功能驗收版/20260714_LINE_FUNCTIONAL_REVIEW/功能驗收版測試說明.md",
+      "verified_capabilities": ["文字、圖片或文字加圖片草稿", "預覽", "安全檢查", "最後確認", "每次切換聊天室前驗證", "隨時停止"]
+    },
+    "contact_converter": {
+      "source": "200_網站工具/contact_converter_mvp/README.md",
+      "verified_capabilities": ["CSV 或 Excel 欄位確認", "姓名、手機、Email、公司、地址與備註", "產生 VCF", "使用者自行匯入通訊錄", "不直接寫入作業系統通訊錄"]
+    },
+    "smart_close": {
+      "source": ["/Users/macminim4/Desktop/Claude cowork/Smart Close 專案/Smart Close 推廣文案.md", "200_網站工具/smart_close_local_demo/README.md"],
+      "verified_capabilities": ["從名片或對話摘要開始建檔", "整理通訊錄、行事曆與後續訊息動作", "依客戶溝通型態整理下次對話與信任建立方向", "把下一步轉成可確認的行動"]
+    }
+  },
+  "excluded_from_public_catalog": {
+    "follow_up_rhythm": "找不到獨立產品、操作說明或驗收來源；不得用官網候選文案虛構成工具。",
+    "life_number_calculator": "使用者要求先隱藏；不得進入公開輸出、導覽、sitemap 或 catalog。"
+  }
+}

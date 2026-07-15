@@ -23,7 +23,6 @@ PUBLIC_ROUTES = [
     "/about/",
     "/solutions/",
     "/tools/",
-    "/tools/follow-up-rhythm/",
     "/tools/sms-suite/",
     "/tools/line-automation/",
     "/tools/contact-converter/",
@@ -116,32 +115,66 @@ def check_pages() -> None:
             json.loads(raw)
         for link in parser.links:
             if link.startswith("/") and not link.startswith("//"):
-                target = route_file(link)
+                target = route_file(link.split("#", 1)[0])
                 if link not in ("/search/",) and not target.exists():
                     fail(f"{route}: broken local link {link}")
     print(f"PASS_METADATA_AND_SCHEMA pages={len(PUBLIC_ROUTES)}")
 
 
+def check_brand_entity_schema() -> None:
+    """Make the brand entity, founder and public-site identity unambiguous."""
+    home_html, _ = read_page("/")
+    home_schemas = [json.loads(raw) for raw in re.findall(r'<script type="application/ld\+json">(.*?)</script>', home_html, re.S)]
+    graph = next((schema.get("@graph") for schema in home_schemas if isinstance(schema.get("@graph"), list)), None)
+    if graph is None:
+        fail("brand entity: homepage must expose a JSON-LD graph")
+    organization = next((node for node in graph if node.get("@type") == "Organization"), None)
+    website = next((node for node in graph if node.get("@type") == "WebSite"), None)
+    if not organization or not website:
+        fail("brand entity: Organization and WebSite nodes are required")
+    expected_organization = {
+        "@id": ORIGIN + "/#organization",
+        "name": "成交聯盟 Deal Alliance",
+        "url": ORIGIN + "/",
+        "logo": ORIGIN + "/assets/brand-mark.svg",
+    }
+    for key, value in expected_organization.items():
+        if organization.get(key) != value:
+            fail(f"brand entity: Organization {key} is inconsistent")
+    founder = organization.get("founder", {})
+    if founder.get("name") != "Orikan 李泰欣" or founder.get("url") != "https://orikan347.github.io/taixin-website/":
+        fail("brand entity: founder must match the public founder source")
+    if set(organization.get("knowsAbout", [])) != {"銷售工作流程", "客戶聯繫", "名單整理", "訊息確認", "後續行動"}:
+        fail("brand entity: public knowledge topics are incomplete")
+    if website.get("publisher", {}).get("@id") != expected_organization["@id"]:
+        fail("brand entity: WebSite publisher must reference the Organization")
+    about_html, _ = read_page("/about/")
+    about_schema = json.loads(re.search(r'<script type="application/ld\+json">(.*?)</script>', about_html, re.S).group(1))
+    if about_schema.get("mainEntity", {}).get("@id") != expected_organization["@id"]:
+        fail("brand entity: about page must reference the same Organization")
+    if any(value not in about_html or value not in (ROOT / "llms.txt").read_text(encoding="utf-8") for value in ("人性", "系統", "效率")):
+        fail("brand entity: visible and machine-readable culture values diverge")
+    print("PASS_BRAND_ENTITY_SCHEMA organization=linked founder=public_source culture=aligned")
+
+
 def check_safety() -> None:
     waitlist_html, parser = read_page("/waitlist/")
-    if not parser.forms:
-        fail("waitlist: expected local form")
-    if any("action" in form for form in parser.forms):
-        fail("waitlist: form must not have a submit action")
+    if parser.forms or "data-local-waitlist" in waitlist_html:
+        fail("waitlist: public status page must not present a non-delivering form")
     js = (ROOT / "assets/site.js").read_text(encoding="utf-8")
     runtime_config = (ROOT / "assets/site-config.js").read_text(encoding="utf-8")
     if 'waitlistMode: "disabled"' not in runtime_config or 'waitlistEndpoint: ""' not in runtime_config:
         fail("waitlist: default runtime configuration must remain fail-closed")
     account_runtime_required = (
-        'accountPortalMode: "disabled"',
-        'accountPortalRegisterUrl: ""',
-        'accountPortalLoginUrl: ""',
-        'accountPortalAllowedOrigins: []',
+        'accountPortalMode: "enabled"',
+        'accountPortalRegisterUrl: "https://app.dealalliancehub.com/register"',
+        'accountPortalLoginUrl: "https://app.dealalliancehub.com/login"',
+        'accountPortalAllowedOrigins: ["https://app.dealalliancehub.com"]',
     )
     if any(marker not in runtime_config for marker in account_runtime_required):
-        fail("account portal: runtime configuration must stay disabled until remote registration verification passes")
-    if "XMLHttpRequest" in js or "navigator.sendBeacon" in js or "if (!remoteEnabled)" not in js:
-        fail("waitlist: remote submission is missing the fail-closed guard")
+        fail("account portal: candidate runtime configuration must use only the verified staging URLs")
+    if "fetch(" in js or "XMLHttpRequest" in js or "navigator.sendBeacon" in js:
+        fail("public runtime: no public receiver or submission code is allowed")
     account_portal_markers = (
         "accountPortalRegisterUrl",
         "accountPortalLoginUrl",
@@ -159,9 +192,9 @@ def check_safety() -> None:
     if contract.get("response", {}).get("success_status") != 202:
         fail("waitlist: readback contract must require HTTP 202")
     catalog = json.loads((ROOT / "tools/catalog.json").read_text(encoding="utf-8"))
-    expected_tools = {"follow-up-rhythm", "sms-suite", "line-automation", "contact-converter", "smart-close"}
+    expected_tools = {"sms-suite", "line-automation", "contact-converter", "smart-close"}
     if {item.get("slug") for item in catalog} != expected_tools:
-        fail("tools: catalog must include all six confirmed tool positions")
+        fail("tools: catalog must include only source-backed public tools")
     for item in catalog:
         detail = route_file(f"/tools/{item['slug']}/")
         if not detail.exists() or item.get("offer_status") not in {"WAITLIST_ONLY", "NOT_ENABLED"}:
@@ -170,11 +203,8 @@ def check_safety() -> None:
         if item.get("status_label") not in detail_html:
             fail(f"tools: status label missing from {item.get('slug')}")
     detail_htmls = [route_file("/tools/" + item["slug"] + "/").read_text(encoding="utf-8") for item in catalog]
-    for demo_name in ("contact-converter", "smart-close", "sms-preview", "line-preview"):
-        if not any(f'data-demo="{demo_name}"' in html for html in detail_htmls):
-            fail(f"tools: interactive demo missing {demo_name}")
-    if "清除／取消" not in (ROOT / "assets/site.js").read_text(encoding="utf-8"):
-        fail("tools: interactive demos must expose a cancel/reset control")
+    if any("data-demo=" in html or "公開示範" in html for html in detail_htmls):
+        fail("tools: public pages must not simulate an unavailable tool")
     robots = (ROOT / "robots.txt").read_text(encoding="utf-8")
     for required in ("User-agent: OAI-SearchBot", "Allow: /", "Disallow: /admin/", "Disallow: /students/"):
         if required not in robots:
@@ -195,7 +225,9 @@ def check_safety() -> None:
             fail(f"tool detail: {item['slug']} must not expose availability or pricing schema while waitlist-only")
     if "/tools/life-number-calculator/" in (ROOT / "tools" / "index.html").read_text(encoding="utf-8"):
         fail("tools: hidden life-number calculator must not be linked from the public tool index")
-    print("PASS_PUBLIC_BOUNDARY local_form_no_submit=true default_endpoint_disabled=true account_portal_disabled_until_backend_release=true tool_catalog=5 waitlist_schema=descriptive_only hidden_tool=life-number-calculator")
+    if "/tools/follow-up-rhythm/" in (ROOT / "tools" / "index.html").read_text(encoding="utf-8"):
+        fail("tools: source-less follow-up rhythm tool must not be linked from the public tool index")
+    print("PASS_PUBLIC_BOUNDARY waitlist_no_form=true no_public_receiver=true account_portal_candidate_enabled=true tool_catalog=4 hidden_tools=life-number-calculator+follow-up-rhythm")
 
 
 def check_tool_source_alignment() -> None:
@@ -217,8 +249,8 @@ def check_tool_source_alignment() -> None:
         fail("tools: release status evidence provenance is incomplete")
 
     required_markers = {
-        "sms_suite": "R27_CORE_PRODUCT_REVIEW_USER_ACCEPTED_STAGING_OAUTH_PENDING",
-        "line_automation": "MAC_COMPILED_V4_CANDIDATE_PRE_SIGN_GUI_PENDING",
+        "sms_suite": "DMG_MOUNT_ROUNDTRIP_PASS_PENDING_CLEAN_MAC_AND_PROTECTED_DOWNLOAD",
+        "line_automation": "MAC_NOTARIZED_PRIVATE_CANDIDATE_CLEAN_MAC_AND_PROTECTED_DOWNLOAD_PENDING",
         "contact_converter": "LOCAL_FAKE_E2E_PASS_USER_VISIBLE_ACCEPTANCE_AND_STAGING_PENDING",
         "smart_close": "LOCAL_USER_ACCEPTED_STAGING_RELEASE_PENDING",
         "life_number_calculator": "RESERVED_NOT_OPEN",
@@ -287,7 +319,7 @@ def check_sitemap_and_responsive_css() -> None:
     for pattern, label in responsive_checks:
         if not re.search(pattern, compact_css):
             fail(f"responsive CSS missing: {label}")
-    if ".nav-links{display:flex;order:3;width:100%;overflow-x:auto" not in compact_css:
+    if not re.search(r"\.nav-links\{display:flex;(?:gap:[^;]+;)?order:3;width:100%;overflow-x:auto", compact_css):
         fail("responsive CSS missing: mobile navigation remains reachable")
     if not (ROOT / "404.html").exists() or not (ROOT / "search/index.html").exists():
         fail("missing 404 or search empty state")
@@ -339,10 +371,10 @@ def check_account_portal_bootstrap() -> None:
 
 
 def check_fake_visitor_paths() -> None:
-    """Replay the four documented visitor journeys with non-production data."""
+    """Replay visitor navigation without submitting or simulating product data."""
     journeys = {
         "visitor_problem_01": ["/", "/solutions/", "/resources/"],
-        "visitor_tool_02": ["/tools/", "/tools/follow-up-rhythm/", "/tools/sms-suite/", "/tools/contact-converter/", "/tools/smart-close/", "/waitlist/"],
+        "visitor_tool_02": ["/tools/", "/tools/sms-suite/", "/tools/contact-converter/", "/tools/smart-close/", "/waitlist/"],
         "visitor_privacy_03": ["/waitlist/", "/privacy/"],
         "crawler_public_04": ["/about/", "/faq/"],
     }
@@ -351,24 +383,22 @@ def check_fake_visitor_paths() -> None:
             html, parser = read_page(route)
             if parser.h1_count != 1:
                 fail(f"{visitor}: {route} missing one answer heading")
-            if route in ("/tools/", "/tools/follow-up-rhythm/", "/waitlist/"):
+            if route in ("/tools/", "/waitlist/"):
                 if not any(word in html for word in ("候補", "候補中", "本機示意")):
                     fail(f"{visitor}: {route} missing waitlist boundary")
     waitlist_html, _ = read_page("/waitlist/")
-    fake_payload = {"topic": "客戶開發與跟進", "contact": "test-visitor@example.invalid"}
-    if fake_payload["contact"] in waitlist_html:
-        fail("fake payload unexpectedly persisted in the candidate HTML")
+    if "<form" in waitlist_html or "input" in waitlist_html:
+        fail("waitlist: must not ask visitors for a fake contact payload")
     js = (ROOT / "assets/site.js").read_text(encoding="utf-8")
-    if "目前候補／洽詢收件尚未開放" not in js or "preventDefault" not in js:
-        fail("local form fail-closed simulation contract is missing")
-    if "第 ${invalid + 1} 行格式不正確" not in js:
-        fail("contact converter: malformed fake rows must fail visibly")
-    print("PASS_FAKE_VISITOR_E2E journeys=4 fake_payload=not_persisted local_form=simulated_only")
+    if "fetch(" in js or "data-demo" in js or "data-local-waitlist" in js:
+        fail("visitor runtime: unavailable tools or receiver cannot be simulated")
+    print("PASS_VISITOR_NAVIGATION_E2E journeys=4 form_submission=absent unavailable_tool_demo=absent")
 
 
 def check_forbidden_public_claims() -> None:
-    forbidden = ("立即購買", "立即下載", "免費試用", "立即啟用", "保證成交", "已上線")
-    for path in ROOT.rglob("*.html"):
+    forbidden = ("立即購買", "立即下載", "免費試用", "立即啟用", "已上線")
+    for route in [*PUBLIC_ROUTES, "/404.html", "/search/"]:
+        path = route_file(route)
         text = path.read_text(encoding="utf-8")
         for phrase in forbidden:
             if phrase in text:
@@ -383,7 +413,52 @@ def check_public_copy_integrity() -> None:
         for phrase in ("候選站 v1", "公開候選站", "本候選站", "不提供登入", "沒有登入、註冊", "未啟用帳號"):
             if phrase in html:
                 fail(f"public copy: {route} contains stale or contradictory phrase {phrase}")
-    print("PASS_PUBLIC_COPY_INTEGRITY routes=16 account_portal_language=consistent")
+    print(f"PASS_PUBLIC_COPY_INTEGRITY routes={len(PUBLIC_ROUTES) + 2} account_portal_language=consistent")
+
+
+def check_source_backed_student_copy() -> None:
+    """Prevent internal release prose or invented products from re-entering learner pages."""
+    ledger_path = ROOT / "content_sources" / "website_content_ledger_20260715.json"
+    ledger = json.loads(ledger_path.read_text(encoding="utf-8"))
+    if ledger.get("schema_version") != "DA_PUBLIC_COPY_LEDGER_V1":
+        fail("copy ledger: invalid schema")
+    if ledger.get("audience", {}).get("primary") != "想把成交能力與工作效率做成系統的銷售工作者與企業團隊":
+        fail("copy ledger: public audience is not explicit")
+    product_sources = ledger.get("products", {})
+    catalog = json.loads((ROOT / "tools" / "catalog.json").read_text(encoding="utf-8"))
+    if {item.get("product_id") for item in catalog} != set(product_sources):
+        fail("copy ledger: public catalog and source-backed products disagree")
+    for item in catalog:
+        if item.get("source_ref") != f"content_sources/website_content_ledger_20260715.json#products.{item['product_id']}":
+            fail(f"copy ledger: missing source reference {item.get('product_id')}")
+    forbidden_internal_terms = tuple(ledger["public_copy_boundary"]["technical_release_terms_are_internal_only"])
+    for route in PUBLIC_ROUTES:
+        html, _ = read_page(route)
+        if any(term in html for term in forbidden_internal_terms):
+            fail(f"copy integrity: internal release term leaked to {route}")
+    about_html, _ = read_page("/about/")
+    if "讓銷售工作者" not in about_html or "時間留回生活" not in about_html:
+        fail("copy integrity: founder mission missing from about page")
+    for value in ("人性", "系統", "效率"):
+        if value not in about_html:
+            fail(f"copy integrity: founder culture value missing {value}")
+    product_copy_markers = {
+        "/": "把成交工作整理好",
+        "/solutions/": "成交工作流程更順",
+        "/tools/": "讓每一次聯繫",
+        "/resources/": "每一步都先做確認",
+        "/faq/": "工具能幫什麼",
+    }
+    for route, marker in product_copy_markers.items():
+        html, _ = read_page(route)
+        if marker not in html:
+            fail(f"copy integrity: product content marker missing {route}")
+    forbidden_positioning = ("學習路徑", "成交地圖", "DISC", "MBAF", "Top Sales")
+    for route in PUBLIC_ROUTES:
+        html, _ = read_page(route)
+        if any(marker in html for marker in forbidden_positioning):
+            fail(f"copy integrity: course positioning leaked to {route}")
+    print("PASS_SOURCE_BACKED_PRODUCT_COPY audience=sales_people+teams product_positioning=complete tools=4 internal_release_terms=absent")
 
 
 def check_planning_contract() -> None:
@@ -430,9 +505,12 @@ def main() -> None:
     config = json.loads((ROOT / "site.config.json").read_text(encoding="utf-8"))
     if config["candidateOrigin"] != ORIGIN or config["canonicalStatus"] not in {"OWNER_CONFIRMED_FORMAL_ORIGIN_NOT_DEPLOYED", "PUBLIC_ORIGIN_VERIFIED_AND_LIVE"}:
         fail("site config must use the formal origin and a known release status")
-    if config.get("accountPortalStatus") != "PENDING_BACKEND_PUBLIC_REGISTRATION_RELEASE":
-        fail("site config must retain the disabled-until-backend-release account portal boundary")
+    if config.get("accountPortalStatus") != "PUBLIC_CTA_LIVE_REGISTRATION_FORM_PENDING_EMAIL_READBACK":
+        fail("site config must retain the public-release verified account portal boundary")
+    if config.get("candidateContentReleaseStatus") != "PENDING_CONTROLLED_RELEASE_PUBLIC_READBACK":
+        fail("site config must distinguish the live origin from the pending content artifact")
     check_pages()
+    check_brand_entity_schema()
     check_safety()
     check_tool_source_alignment()
     check_sitemap_and_responsive_css()
@@ -441,9 +519,10 @@ def main() -> None:
     check_fake_visitor_paths()
     check_forbidden_public_claims()
     check_public_copy_integrity()
+    check_source_backed_student_copy()
     check_planning_contract()
     check_http_routes()
-    print(f"PASS_ALL_LOCAL_GATES candidate_origin=www.dealalliancehub.com public_release_verified={str(config['canonicalStatus'] == 'PUBLIC_ORIGIN_VERIFIED_AND_LIVE').lower()} account_portal_disabled_until_backend_release=true")
+    print(f"PASS_ALL_LOCAL_GATES candidate_origin=www.dealalliancehub.com origin_live={str(config['canonicalStatus'] == 'PUBLIC_ORIGIN_VERIFIED_AND_LIVE').lower()} candidate_content_deployed=false account_portal_public_release_verified=true user_acceptance_pending=true")
 
 
 if __name__ == "__main__":

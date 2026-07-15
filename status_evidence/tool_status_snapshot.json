@@ -1,42 +1,42 @@
 {
   "schema_version": "DA_TOOL_STATUS_SNAPSHOT_V1",
-  "captured_on": "2026-07-14",
+  "captured_on": "2026-07-15",
   "source": {
     "path": "400_桌面程式優化/工具整合狀態表.md",
-    "sha256": "6521462fe7b4be5ef1f32b3cf727b630b397733eda5fd7a34b93a8ff3febb99c"
+    "sha256": "12531342e4b99cfae0987b2bbe03a9435005ef54bd69d8ea7803aa41647d7be3"
   },
   "tools": [
     {
       "product_id": "sms_suite",
-      "source_status": "R27_CORE_PRODUCT_REVIEW_USER_ACCEPTED_STAGING_OAUTH_PENDING",
+      "source_status": "DMG_MOUNT_ROUNDTRIP_PASS_PENDING_CLEAN_MAC_AND_PROTECTED_DOWNLOAD",
       "offer_status": "WAITLIST_ONLY",
-      "status_label": "候補中・正式發放未開放",
-      "public_summary": "協助整理生日通知與一般群發的訊息、收件人與發送前確認流程。",
-      "public_platform": "r27 功能候選；尚待 staging OAuth、production build 與 Apple 安全 Gate"
+      "status_label": "候補中・工具開放時間待公告",
+      "public_summary": "把生日祝福與一般群發，從名單、稱呼、內容到發送前確認，整理成可逐筆檢查的流程。",
+      "public_platform": "正式使用前仍需完成安全與授權驗收。"
     },
     {
       "product_id": "line_automation",
-      "source_status": "MAC_COMPILED_V4_CANDIDATE_PRE_SIGN_GUI_PENDING",
+      "source_status": "MAC_NOTARIZED_PRIVATE_CANDIDATE_CLEAN_MAC_AND_PROTECTED_DOWNLOAD_PENDING",
       "offer_status": "WAITLIST_ONLY",
-      "status_label": "候補中・不可下載，V4 實機驗收中",
-      "public_summary": "協助整理 LINE 訊息流程與發送前確認；不在公開站登入或發送。",
-      "public_platform": "編譯式 V4 候選已完成假資料與 GUI 不發送驗收；尚待 staging 授權、重簽與公證"
+      "status_label": "候補中・工具開放時間待公告",
+      "public_summary": "把文字或圖片的 LINE 訊息流程，變成預覽、安全檢查與最後確認後才執行的可控步驟。",
+      "public_platform": "正式使用前仍需完成安全與授權驗收。"
     },
     {
       "product_id": "contact_converter",
       "source_status": "LOCAL_FAKE_E2E_PASS_USER_VISIBLE_ACCEPTANCE_AND_STAGING_PENDING",
       "offer_status": "WAITLIST_ONLY",
-      "status_label": "候補中・正式服務待確認",
-      "public_summary": "將已整理的姓名、電話與 Email 轉成 VCF；正式服務會由後端授權與短期資料邊界保護。",
-      "public_platform": "去識別本機驗收完成；staging HTTPS、權益與取消讀回待完成"
+      "status_label": "候補中・工具開放時間待公告",
+      "public_summary": "把整理完成的 CSV 或 Excel 名單，確認欄位後轉成 VCF，讓你自行匯入通訊錄。",
+      "public_platform": "正式使用前仍需完成安全與授權驗收。"
     },
     {
       "product_id": "smart_close",
       "source_status": "LOCAL_USER_ACCEPTED_STAGING_RELEASE_PENDING",
       "offer_status": "WAITLIST_ONLY",
-      "status_label": "候補中・正式 AI Gate 待確認",
-      "public_summary": "整理對話中的客戶資訊、下一步與跟進策略；公開示範不呼叫 AI、不保存內容。",
-      "public_platform": "隔離本機已驗收；staging HTTPS、遠端權益與 Gemini E2E 待完成"
+      "status_label": "候補中・工具開放時間待公告",
+      "public_summary": "從名片或對話摘要開始，協助完成建檔、下一步提醒與依溝通型態整理成交策略。",
+      "public_platform": "正式使用前仍需完成安全與授權驗收。"
     },
     {
       "product_id": "life_number_calculator",

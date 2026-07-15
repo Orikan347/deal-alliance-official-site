@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""GET-only Gate for the private staging account landing pages.
+"""GET-only Gate for the public account entry pages.
 
-This verifies that the account domain is an HTTPS private boundary, not that
-public registration has been opened.  It never sends credentials or invokes
-the lifecycle-only routes guarded by the staging secret.
+The public official site never collects credentials.  The dedicated app
+origin is the sole place where a visitor may see the reviewed registration
+or login form.  This check only reads those pages: it never submits a form,
+sends email, or invokes lifecycle routes.
 """
 
 from __future__ import annotations
@@ -63,10 +64,15 @@ def main() -> int:
                 if marker not in header_text:
                     fail(f"route={route} missing_header={marker}")
             html = body.read_text(encoding="utf-8", errors="replace").lower()
-            if "<form" in html or "type=\"password\"" in html or "type='password'" in html:
-                fail(f"route={route} credential_form_must_not_be_public")
+            expected_api = "/api/auth/register" if route == "/register" else "/api/auth/login"
+            if "<form" not in html or "type=\"email\"" not in html or "type=\"password\"" not in html:
+                fail(f"route={route} reviewed_credential_form_missing")
+            if expected_api not in html:
+                fail(f"route={route} expected_same_origin_api_missing")
+            if "http://" in html or "action=\"http" in html or "action='http" in html:
+                fail(f"route={route} unsafe_credential_destination")
     resolver = "explicit_sni_dns_pin" if args.resolve_ip else "system_dns"
-    print(f"PASS_ACCOUNT_PORTAL_PUBLIC origin={origin} paths=2 private_headers=ok credential_forms=absent resolver={resolver}")
+    print(f"PASS_ACCOUNT_PORTAL_PUBLIC origin={origin} paths=2 private_headers=ok credential_forms=app_only_same_origin resolver={resolver}")
     return 0
 
 

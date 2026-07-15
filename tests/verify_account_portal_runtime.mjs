@@ -58,6 +58,8 @@ assert.deepEqual(render({ ...valid, accountPortalMode: 'disabled' }), []);
 assert.deepEqual(render({ ...valid, accountPortalLoginUrl: '' }), []);
 assert.deepEqual(render({ ...valid, accountPortalAllowedOrigins: ['https://other.example.invalid'] }), []);
 assert.deepEqual(render({ ...valid, accountPortalRegisterUrl: 'http://app.example.invalid/register' }), []);
+assert.deepEqual(render({ ...valid, accountPortalRegisterUrl: 'https://www.dealalliancehub.com/register' }), []);
+assert.deepEqual(render({ ...valid, accountPortalRegisterUrl: '/register' }), []);
 assert.deepEqual(render({ ...valid, accountPortalRegisterUrl: 'https://app.example.invalid/register?token=must-not-be-public' }), []);
 assert.deepEqual(render({ ...valid, accountPortalLoginUrl: 'https://app.example.invalid/login#session' }), []);
 assert.deepEqual(render({ ...valid, accountPortalRegisterUrl: 'https://app.example.invalid/reset-password' }), []);
@@ -70,4 +72,4 @@ assert.deepEqual(
   ],
 );
 
-console.log('PASS_ACCOUNT_PORTAL_RUNTIME disabled=hidden incomplete=hidden invalid_origin=hidden http=hidden sensitive_url=hidden approved_https_clean_paths=two_links fake_urls_only=true');
+console.log('PASS_ACCOUNT_PORTAL_RUNTIME disabled=hidden incomplete=hidden invalid_origin=hidden same_origin=hidden relative_url=hidden http=hidden sensitive_url=hidden approved_https_clean_paths=two_links fake_urls_only=true');

@@ -19,7 +19,7 @@ done
 # exclude it from every generated public artifact.
 mkdir -p dist/tools
 cp tools/index.html dist/tools/
-for tool in follow-up-rhythm sms-suite line-automation contact-converter smart-close; do
+for tool in sms-suite line-automation contact-converter smart-close; do
   cp -R "tools/$tool" dist/tools/
 done
 
@@ -29,3 +29,4 @@ test ! -e dist/tests
 test ! -e dist/release_contract.json
 test ! -e dist/waitlist_contract.json
 test ! -e dist/tools/life-number-calculator
+test ! -e dist/tools/follow-up-rhythm

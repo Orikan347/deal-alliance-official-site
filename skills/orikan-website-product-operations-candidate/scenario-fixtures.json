@@ -1,0 +1,66 @@
+{
+  "version": "0.1.0",
+  "cases": [
+    {
+      "id": "homepage-cta-copy-refresh",
+      "change": "首頁 CTA 與文案改版",
+      "change_class": "STANDARD",
+      "public": true,
+      "external_action": false,
+      "required_lanes": ["design", "truth", "seo_geo", "accessibility", "performance", "release"],
+      "expected_stage": "FUNCTIONAL_TEST_READY"
+    },
+    {
+      "id": "new-waitlist-tool",
+      "change": "新增仍未開放的工具介紹頁",
+      "change_class": "STANDARD",
+      "public": true,
+      "external_action": false,
+      "offer_status": "WAITLIST_ONLY",
+      "required_lanes": ["design", "truth", "seo_geo", "privacy", "release"],
+      "forbidden_claims": ["download", "purchase", "free trial", "offer price"],
+      "expected_stage": "FUNCTIONAL_TEST_READY"
+    },
+    {
+      "id": "public-resource-article",
+      "change": "新增公開資源文章",
+      "change_class": "STANDARD",
+      "public": true,
+      "external_action": false,
+      "required_lanes": ["design", "truth", "seo_geo", "accessibility", "performance", "release"],
+      "required_facts": ["author", "published_or_updated_date", "source", "scope_or_limit"],
+      "expected_stage": "PENDING_USER_ACCEPTANCE"
+    },
+    {
+      "id": "content-flywheel-resource-update",
+      "change": "把已核准公開資源納入對應問題叢集與下一步入口",
+      "change_class": "STANDARD",
+      "public": true,
+      "external_action": false,
+      "required_lanes": ["truth", "content_cluster", "seo_geo", "privacy", "release"],
+      "required_facts": ["source", "public_permission", "last_reviewed", "reader_problem"],
+      "forbidden_claims": ["private content", "unverified claim", "automatic publishing"],
+      "expected_stage": "PENDING_USER_ACCEPTANCE"
+    },
+    {
+      "id": "payment-form-request",
+      "change": "在公開頁啟用付款表單",
+      "change_class": "HIGH_RISK",
+      "public": true,
+      "external_action": true,
+      "required_lanes": ["truth", "privacy", "security", "release"],
+      "requires_user_approval": true,
+      "expected_stage": "PENDING_RELEASE_SECURITY"
+    },
+    {
+      "id": "quick-layout-correction",
+      "change": "修正不涉及主張或 CTA 的手機間距",
+      "change_class": "QUICK",
+      "public": true,
+      "external_action": false,
+      "required_lanes": ["design", "accessibility", "visual_readback"],
+      "forbidden_claims": ["cta destination change", "schema change", "data collection"],
+      "expected_stage": "FUNCTIONAL_TEST_READY"
+    }
+  ]
+}

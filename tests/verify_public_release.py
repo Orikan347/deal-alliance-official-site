@@ -23,13 +23,21 @@ FORMAL_ORIGIN = "https://www.dealalliancehub.com"
 ROOT_ORIGIN = "https://dealalliancehub.com"
 PUBLIC_PATHS = [
     "/", "/about/", "/solutions/", "/tools/",
-    "/tools/follow-up-rhythm/", "/tools/sms-suite/",
+    "/tools/sms-suite/",
     "/tools/line-automation/", "/tools/contact-converter/",
     "/tools/smart-close/",
     "/resources/", "/faq/", "/waitlist/", "/privacy/", "/terms/",
     "/404.html", "/robots.txt", "/sitemap.xml", "/llms.txt",
 ]
-HIDDEN_PUBLIC_PATHS = ("/tools/life-number-calculator/",)
+HIDDEN_PUBLIC_PATHS = ("/tools/life-number-calculator/", "/tools/follow-up-rhythm/")
+PRODUCT_CONTENT_REVISION = "PRODUCT_PLATFORM_20260715"
+PRODUCT_CONTENT_MARKERS = {
+    "/": "把成交工作整理好",
+    "/solutions/": "成交工作流程更順",
+    "/tools/": "讓每一次聯繫",
+    "/resources/": "每一步都先做確認",
+    "/faq/": "工具能幫什麼",
+}
 REQUIRED_HEADERS = ("content-security-policy", "x-content-type-options", "referrer-policy")
 ACCOUNT_PORTAL_ORIGIN = "https://app.dealalliancehub.com"
 ACCOUNT_PORTAL_PATHS = ("/register", "/login")
@@ -166,11 +174,15 @@ def main() -> int:
         if response.status != 200:
             fail(f"path={path} status={response.status}")
         checked += 1
+        expected_content_marker = PRODUCT_CONTENT_MARKERS.get(path)
+        if expected_content_marker and expected_content_marker not in body:
+            fail(f"path={path} product_content_revision_stale={PRODUCT_CONTENT_REVISION}")
         if path == "/llms.txt":
             required_llms_markers = (
                 f"正式公開網站：{origin}/",
                 f"{origin}/solutions/",
                 f"{origin}/tools/",
+                "文化核心是人性、系統、效率",
                 "公開網站不處理密碼、session、學生資料、管理設定、付款或工具授權。",
                 "公開網站不代收帳密或 token。",
             )
@@ -197,6 +209,11 @@ def main() -> int:
                 fail(f"path={path} invalid_json_ld")
             if not json_ld:
                 fail(f"path={path} missing_json_ld")
+            if path == "/":
+                graph = next((schema.get("@graph") for schema in json_ld if isinstance(schema.get("@graph"), list)), None)
+                organization = next((node for node in graph or [] if node.get("@type") == "Organization"), None)
+                if not organization or organization.get("@id") != origin + "/#organization" or organization.get("founder", {}).get("name") != "Orikan 李泰欣":
+                    fail("homepage_brand_entity_schema_stale")
             if "official-domain-pending.invalid" in body:
                 fail(f"path={path} placeholder_origin_present")
 
@@ -204,36 +221,29 @@ def main() -> int:
         runtime_config = get(opener, origin + "/assets/site-config.js").read().decode("utf-8", "replace")
     except (HTTPError, URLError, TimeoutError) as error:
         fail(f"account_portal_config_unreachable={error}")
-    # Account links must remain fail-closed until the live registration and
-    # email-verification lifecycle has been remotely verified. The public
-    # website must not advertise a staging explanation page as customer login.
     required_account_portal_config = (
-        'accountPortalMode: "disabled"',
-        'accountPortalRegisterUrl: ""',
-        'accountPortalLoginUrl: ""',
-        'accountPortalAllowedOrigins: []',
+        'accountPortalMode: "enabled"',
+        'accountPortalRegisterUrl: "https://app.dealalliancehub.com/register"',
+        'accountPortalLoginUrl: "https://app.dealalliancehub.com/login"',
+        'accountPortalAllowedOrigins: ["https://app.dealalliancehub.com"]',
     )
     if any(marker not in runtime_config for marker in required_account_portal_config):
-        fail("account_portal_fail_closed_config_missing")
+        fail("account_portal_config_not_verified_candidate")
 
+    hidden_path_failures: list[str] = []
     for path in HIDDEN_PUBLIC_PATHS:
         try:
             response = get(opener, origin + path)
         except HTTPError as error:
             if error.code == 404:
                 continue
-            fail(f"hidden_path={path} status={error.code}")
+            hidden_path_failures.append(f"{path}:status={error.code}")
         except (URLError, TimeoutError) as error:
-            fail(f"hidden_path={path} unreachable={error}")
-        # The exact retired URL may be absent or redirect only to the public
-        # tool overview. Do not allow a retained page or arbitrary redirect.
-        if (
-            path == "/tools/life-number-calculator/"
-            and response.status == 200
-            and response.geturl().rstrip("/") == (origin + "/tools").rstrip("/")
-        ):
-            continue
-        fail(f"hidden_path={path} status={response.status} final={response.geturl()}")
+            hidden_path_failures.append(f"{path}:unreachable={error}")
+        else:
+            hidden_path_failures.append(f"{path}:status={response.status}")
+    if hidden_path_failures:
+        fail("hidden_paths=" + ",".join(hidden_path_failures))
 
     for path in ACCOUNT_PORTAL_PATHS:
         try:
@@ -251,8 +261,13 @@ def main() -> int:
             actual_value = response.headers.get(header, "").lower()
             if required_value not in actual_value:
                 fail(f"account_portal_path={path} missing_private_header={header}")
-        if "<form" in body or 'type="password"' in body or "type='password'" in body:
-            fail(f"account_portal_path={path} credential_form_present")
+        expected_api = "/api/auth/register" if path == "/register" else "/api/auth/login"
+        if "<form" not in body or 'type="email"' not in body or 'type="password"' not in body:
+            fail(f"account_portal_path={path} reviewed_credential_form_missing")
+        if expected_api not in body:
+            fail(f"account_portal_path={path} expected_same_origin_api_missing")
+        if "http://" in body or 'action="http' in body or "action='http" in body:
+            fail(f"account_portal_path={path} unsafe_credential_destination")
 
     sitemap_url = origin + "/sitemap.xml"
     try:
@@ -264,7 +279,7 @@ def main() -> int:
         fail("sitemap_origin_or_count_mismatch")
 
     resolver = "+".join(sorted(RESOLVER_MODES))
-    print(f"PASS_PUBLIC_RELEASE origin={origin} paths={checked} hidden_paths=1 root_redirect=www crawler_assets=ok account_portal_config=fail_closed account_portal_routes=2 private_headers=ok waitlist_post=not_performed resolver={resolver}")
+    print(f"PASS_PUBLIC_RELEASE origin={origin} paths={checked} hidden_paths={len(HIDDEN_PUBLIC_PATHS)} content_revision={PRODUCT_CONTENT_REVISION} root_redirect=www crawler_assets=ok account_portal_config=verified account_portal_routes=2 private_headers=ok credential_forms=app_only_same_origin waitlist_post=not_performed resolver={resolver}")
     return 0
 
 

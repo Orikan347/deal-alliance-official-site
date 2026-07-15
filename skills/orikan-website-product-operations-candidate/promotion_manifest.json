@@ -1,0 +1,33 @@
+{
+  "skill": "orikan-website-product-operations",
+  "version": "0.2.0",
+  "status": "APPROVED_FOR_HUB_PROMOTION",
+  "approved_by_user_at": "2026-07-15",
+  "source": "200_官網整合/公開官網候選_v1/skills/orikan-website-product-operations-candidate/SKILL.md",
+  "target_master": "TaixinMemoryHub/tools/orikan-website-product-operations/SKILL.md",
+  "promotion_steps": [
+    "copy_candidate_to_hub_master",
+    "add_skill_catalog_entry",
+    "add_routing_map_rule",
+    "register_skill_contract",
+    "create_or_sync_installed_copy",
+    "run_drift_audit",
+    "run_route_smoke",
+    "run_deidentified_scenarios"
+  ],
+  "must_preserve": [
+    "website_only_scope",
+    "seo_geo_truth_boundary",
+    "public_private_separation",
+    "quick_standard_high_risk_change_classes",
+    "page_contract",
+    "visual_review",
+    "no_external_action_without_user_approval"
+  ],
+  "must_not_do": [
+    "deploy_or_push_from_candidate_line",
+    "copy_external_brand_or_content",
+    "enable_payment_or_data_collection",
+    "claim_all_future_sites_are_auto_covered_before_sync_verification"
+  ]
+}
