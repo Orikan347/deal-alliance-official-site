@@ -41,6 +41,7 @@ PRODUCT_CONTENT_MARKERS = {
 REQUIRED_HEADERS = ("content-security-policy", "x-content-type-options", "referrer-policy")
 ACCOUNT_PORTAL_ORIGIN = "https://app.dealalliancehub.com"
 ACCOUNT_PORTAL_PATHS = ("/register", "/login")
+ACCOUNT_PORTAL_UNAUTH_PATH = "/api/my-tools"
 ACCOUNT_PORTAL_REQUIRED_HEADERS = {
     "cache-control": "no-store",
     "x-robots-tag": "noindex",
@@ -222,13 +223,13 @@ def main() -> int:
     except (HTTPError, URLError, TimeoutError) as error:
         fail(f"account_portal_config_unreachable={error}")
     required_account_portal_config = (
-        'accountPortalMode: "enabled"',
-        'accountPortalRegisterUrl: "https://app.dealalliancehub.com/register"',
-        'accountPortalLoginUrl: "https://app.dealalliancehub.com/login"',
-        'accountPortalAllowedOrigins: ["https://app.dealalliancehub.com"]',
+        'accountPortalMode: "disabled"',
+        'accountPortalRegisterUrl: ""',
+        'accountPortalLoginUrl: ""',
+        'accountPortalAllowedOrigins: []',
     )
     if any(marker not in runtime_config for marker in required_account_portal_config):
-        fail("account_portal_config_not_verified_candidate")
+        fail("account_portal_config_not_fail_closed")
 
     hidden_path_failures: list[str] = []
     for path in HIDDEN_PUBLIC_PATHS:
@@ -249,29 +250,28 @@ def main() -> int:
     if hidden_path_failures:
         fail("hidden_paths=" + ",".join(hidden_path_failures))
 
-    for path in ACCOUNT_PORTAL_PATHS:
-        try:
-            response = get(opener, ACCOUNT_PORTAL_ORIGIN + path)
-            body = response.read().decode("utf-8", "replace").lower()
-        except HTTPError as error:
-            fail(f"account_portal_path={path} status={error.code}")
-        except (URLError, TimeoutError) as error:
-            fail(f"account_portal_path={path} unreachable={error}")
-        if response.status != 200:
-            fail(f"account_portal_path={path} status={response.status}")
-        if "text/html" not in response.headers.get("content-type", "").lower():
-            fail(f"account_portal_path={path} content_type_not_html")
-        for header, required_value in ACCOUNT_PORTAL_REQUIRED_HEADERS.items():
-            actual_value = response.headers.get(header, "").lower()
-            if required_value not in actual_value:
-                fail(f"account_portal_path={path} missing_private_header={header}")
-        expected_api = "/api/auth/register" if path == "/register" else "/api/auth/login"
-        if "<form" not in body or 'type="email"' not in body or 'type="password"' not in body:
-            fail(f"account_portal_path={path} reviewed_credential_form_missing")
-        if expected_api not in body:
-            fail(f"account_portal_path={path} expected_same_origin_api_missing")
-        if "http://" in body or 'action="http' in body or "action='http" in body:
-            fail(f"account_portal_path={path} unsafe_credential_destination")
+    # The public site may point to the account app, but an anonymous visitor
+    # must never obtain a tool list or a download link by calling the app API.
+    try:
+        response = get(opener, ACCOUNT_PORTAL_ORIGIN + ACCOUNT_PORTAL_UNAUTH_PATH)
+        my_tools_status = response.status
+        my_tools_headers = response.headers
+        my_tools_body = response.read().decode("utf-8", "replace").lower()
+    except HTTPError as error:
+        my_tools_status = error.code
+        my_tools_headers = error.headers
+        my_tools_body = error.read().decode("utf-8", "replace").lower()
+    except (URLError, TimeoutError) as error:
+        fail(f"account_portal_unauth_path unreachable={error}")
+    if my_tools_status != 401:
+        fail(f"account_portal_unauth_path status={my_tools_status}")
+    normalized_my_tools_headers = {key.lower(): value for key, value in my_tools_headers.items()}
+    for header, required_value in ACCOUNT_PORTAL_REQUIRED_HEADERS.items():
+        actual_value = normalized_my_tools_headers.get(header, "").lower()
+        if required_value not in actual_value:
+            fail(f"account_portal_unauth_path missing_private_header={header}")
+    if "unauthorized" not in my_tools_body or "download_url" in my_tools_body:
+        fail("account_portal_unauth_path boundary_not_fail_closed")
 
     sitemap_url = origin + "/sitemap.xml"
     try:
@@ -283,7 +283,7 @@ def main() -> int:
         fail("sitemap_origin_or_count_mismatch")
 
     resolver = "+".join(sorted(RESOLVER_MODES))
-    print(f"PASS_PUBLIC_RELEASE origin={origin} paths={checked} hidden_paths={len(HIDDEN_PUBLIC_PATHS)} content_revision={PRODUCT_CONTENT_REVISION} root_redirect=www crawler_assets=ok account_portal_config=verified account_portal_routes=2 private_headers=ok credential_forms=app_only_same_origin waitlist_post=not_performed resolver={resolver}")
+    print(f"PASS_PUBLIC_RELEASE origin={origin} paths={checked} hidden_paths={len(HIDDEN_PUBLIC_PATHS)} content_revision={PRODUCT_CONTENT_REVISION} root_redirect=www crawler_assets=ok account_portal_config=disabled_fail_closed unauthenticated_my_tools=401 waitlist_post=not_performed resolver={resolver}")
     return 0
 
 

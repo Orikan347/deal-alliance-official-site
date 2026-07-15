@@ -166,13 +166,13 @@ def check_safety() -> None:
     if 'waitlistMode: "disabled"' not in runtime_config or 'waitlistEndpoint: ""' not in runtime_config:
         fail("waitlist: default runtime configuration must remain fail-closed")
     account_runtime_required = (
-        'accountPortalMode: "enabled"',
-        'accountPortalRegisterUrl: "https://app.dealalliancehub.com/register"',
-        'accountPortalLoginUrl: "https://app.dealalliancehub.com/login"',
-        'accountPortalAllowedOrigins: ["https://app.dealalliancehub.com"]',
+        'accountPortalMode: "disabled"',
+        'accountPortalRegisterUrl: ""',
+        'accountPortalLoginUrl: ""',
+        'accountPortalAllowedOrigins: []',
     )
     if any(marker not in runtime_config for marker in account_runtime_required):
-        fail("account portal: candidate runtime configuration must use only the verified staging URLs")
+        fail("account portal: account entry must remain fail-closed until owner email readback")
     if "fetch(" in js or "XMLHttpRequest" in js or "navigator.sendBeacon" in js:
         fail("public runtime: no public receiver or submission code is allowed")
     account_portal_markers = (
@@ -227,7 +227,7 @@ def check_safety() -> None:
         fail("tools: hidden life-number calculator must not be linked from the public tool index")
     if "/tools/follow-up-rhythm/" in (ROOT / "tools" / "index.html").read_text(encoding="utf-8"):
         fail("tools: source-less follow-up rhythm tool must not be linked from the public tool index")
-    print("PASS_PUBLIC_BOUNDARY waitlist_no_form=true no_public_receiver=true account_portal_candidate_enabled=true tool_catalog=4 hidden_tools=life-number-calculator+follow-up-rhythm")
+    print("PASS_PUBLIC_BOUNDARY waitlist_no_form=true no_public_receiver=true account_portal_disabled_pending_owner_email_readback=true tool_catalog=4 hidden_tools=life-number-calculator+follow-up-rhythm")
 
 
 def check_tool_source_alignment() -> None:
@@ -505,7 +505,7 @@ def main() -> None:
     config = json.loads((ROOT / "site.config.json").read_text(encoding="utf-8"))
     if config["candidateOrigin"] != ORIGIN or config["canonicalStatus"] not in {"OWNER_CONFIRMED_FORMAL_ORIGIN_NOT_DEPLOYED", "PUBLIC_ORIGIN_VERIFIED_AND_LIVE", "PAGES_PRODUCTION_READBACK_PASS_FORMAL_DOMAIN_DNS_PENDING"}:
         fail("site config must use the formal origin and a known release status")
-    if config.get("accountPortalStatus") != "PUBLIC_CTA_LIVE_REGISTRATION_FORM_PENDING_EMAIL_READBACK":
+    if config.get("accountPortalStatus") != "PUBLIC_CTA_DISABLED_PENDING_OWNER_EMAIL_READBACK":
         fail("site config must retain the public-release verified account portal boundary")
     if config.get("candidateContentReleaseStatus") not in {"PAGES_PRODUCTION_READBACK_PASS_FORMAL_ORIGIN_PENDING", "PUBLIC_ORIGIN_READBACK_PASS_OPERATIONAL_PENDING"}:
         fail("site config must declare a known public-origin content state")

@@ -6,5 +6,5 @@
   "language": "zh-Hant-TW",
   "lastReviewed": "2026-07-15",
   "publicBoundary": "公開站只負責介紹、資源與安全導向；註冊／登入由核准的後台入口承接，官網不處理密碼、session、學生、管理、授權或真實帳務資料。",
-  "accountPortalStatus": "PUBLIC_CTA_LIVE_REGISTRATION_FORM_PENDING_EMAIL_READBACK"
+  "accountPortalStatus": "PUBLIC_CTA_DISABLED_PENDING_OWNER_EMAIL_READBACK"
 }
