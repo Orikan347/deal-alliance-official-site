@@ -204,14 +204,17 @@ def main() -> int:
         runtime_config = get(opener, origin + "/assets/site-config.js").read().decode("utf-8", "replace")
     except (HTTPError, URLError, TimeoutError) as error:
         fail(f"account_portal_config_unreachable={error}")
+    # Account links must remain fail-closed until the live registration and
+    # email-verification lifecycle has been remotely verified. The public
+    # website must not advertise a staging explanation page as customer login.
     required_account_portal_config = (
-        'accountPortalMode: "enabled"',
-        'accountPortalRegisterUrl: "https://app.dealalliancehub.com/register"',
-        'accountPortalLoginUrl: "https://app.dealalliancehub.com/login"',
-        'accountPortalAllowedOrigins: ["https://app.dealalliancehub.com"]',
+        'accountPortalMode: "disabled"',
+        'accountPortalRegisterUrl: ""',
+        'accountPortalLoginUrl: ""',
+        'accountPortalAllowedOrigins: []',
     )
     if any(marker not in runtime_config for marker in required_account_portal_config):
-        fail("account_portal_config_not_verified_candidate")
+        fail("account_portal_fail_closed_config_missing")
 
     for path in HIDDEN_PUBLIC_PATHS:
         try:
@@ -222,7 +225,15 @@ def main() -> int:
             fail(f"hidden_path={path} status={error.code}")
         except (URLError, TimeoutError) as error:
             fail(f"hidden_path={path} unreachable={error}")
-        fail(f"hidden_path={path} status={response.status}")
+        # The exact retired URL may be absent or redirect only to the public
+        # tool overview. Do not allow a retained page or arbitrary redirect.
+        if (
+            path == "/tools/life-number-calculator/"
+            and response.status == 200
+            and response.geturl().rstrip("/") == (origin + "/tools").rstrip("/")
+        ):
+            continue
+        fail(f"hidden_path={path} status={response.status} final={response.geturl()}")
 
     for path in ACCOUNT_PORTAL_PATHS:
         try:
@@ -253,7 +264,7 @@ def main() -> int:
         fail("sitemap_origin_or_count_mismatch")
 
     resolver = "+".join(sorted(RESOLVER_MODES))
-    print(f"PASS_PUBLIC_RELEASE origin={origin} paths={checked} hidden_paths=1 root_redirect=www crawler_assets=ok account_portal_config=verified account_portal_routes=2 private_headers=ok waitlist_post=not_performed resolver={resolver}")
+    print(f"PASS_PUBLIC_RELEASE origin={origin} paths={checked} hidden_paths=1 root_redirect=www crawler_assets=ok account_portal_config=fail_closed account_portal_routes=2 private_headers=ok waitlist_post=not_performed resolver={resolver}")
     return 0
 
 
