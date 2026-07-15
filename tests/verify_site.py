@@ -133,13 +133,13 @@ def check_safety() -> None:
     if 'waitlistMode: "disabled"' not in runtime_config or 'waitlistEndpoint: ""' not in runtime_config:
         fail("waitlist: default runtime configuration must remain fail-closed")
     account_runtime_required = (
-        'accountPortalMode: "enabled"',
-        'accountPortalRegisterUrl: "https://app.dealalliancehub.com/register"',
-        'accountPortalLoginUrl: "https://app.dealalliancehub.com/login"',
-        'accountPortalAllowedOrigins: ["https://app.dealalliancehub.com"]',
+        'accountPortalMode: "disabled"',
+        'accountPortalRegisterUrl: ""',
+        'accountPortalLoginUrl: ""',
+        'accountPortalAllowedOrigins: []',
     )
     if any(marker not in runtime_config for marker in account_runtime_required):
-        fail("account portal: candidate runtime configuration must use only the verified staging URLs")
+        fail("account portal: runtime configuration must stay disabled until remote registration verification passes")
     if "XMLHttpRequest" in js or "navigator.sendBeacon" in js or "if (!remoteEnabled)" not in js:
         fail("waitlist: remote submission is missing the fail-closed guard")
     account_portal_markers = (
@@ -195,7 +195,7 @@ def check_safety() -> None:
             fail(f"tool detail: {item['slug']} must not expose availability or pricing schema while waitlist-only")
     if "/tools/life-number-calculator/" in (ROOT / "tools" / "index.html").read_text(encoding="utf-8"):
         fail("tools: hidden life-number calculator must not be linked from the public tool index")
-    print("PASS_PUBLIC_BOUNDARY local_form_no_submit=true default_endpoint_disabled=true account_portal_candidate_enabled=true tool_catalog=5 waitlist_schema=descriptive_only hidden_tool=life-number-calculator")
+    print("PASS_PUBLIC_BOUNDARY local_form_no_submit=true default_endpoint_disabled=true account_portal_disabled_until_backend_release=true tool_catalog=5 waitlist_schema=descriptive_only hidden_tool=life-number-calculator")
 
 
 def check_tool_source_alignment() -> None:
@@ -430,8 +430,8 @@ def main() -> None:
     config = json.loads((ROOT / "site.config.json").read_text(encoding="utf-8"))
     if config["candidateOrigin"] != ORIGIN or config["canonicalStatus"] not in {"OWNER_CONFIRMED_FORMAL_ORIGIN_NOT_DEPLOYED", "PUBLIC_ORIGIN_VERIFIED_AND_LIVE"}:
         fail("site config must use the formal origin and a known release status")
-    if config.get("accountPortalStatus") != "PUBLIC_CTA_RELEASE_VERIFIED_PENDING_USER_ACCEPTANCE":
-        fail("site config must retain the public-release verified account portal boundary")
+    if config.get("accountPortalStatus") != "PENDING_BACKEND_PUBLIC_REGISTRATION_RELEASE":
+        fail("site config must retain the disabled-until-backend-release account portal boundary")
     check_pages()
     check_safety()
     check_tool_source_alignment()
@@ -443,7 +443,7 @@ def main() -> None:
     check_public_copy_integrity()
     check_planning_contract()
     check_http_routes()
-    print(f"PASS_ALL_LOCAL_GATES candidate_origin=www.dealalliancehub.com public_release_verified={str(config['canonicalStatus'] == 'PUBLIC_ORIGIN_VERIFIED_AND_LIVE').lower()} account_portal_public_release_verified=true user_acceptance_pending=true")
+    print(f"PASS_ALL_LOCAL_GATES candidate_origin=www.dealalliancehub.com public_release_verified={str(config['canonicalStatus'] == 'PUBLIC_ORIGIN_VERIFIED_AND_LIVE').lower()} account_portal_disabled_until_backend_release=true")
 
 
 if __name__ == "__main__":

@@ -3,12 +3,12 @@ window.DEAL_ALLIANCE_SITE_CONFIG = Object.freeze({
   waitlistEndpoint: "",
   waitlistAllowedOrigins: [],
   waitlistMode: "disabled",
-  // Account credentials never belong to the public site. The entry is only
-  // rendered only for the staging origin that passed the deidentified
-  // lifecycle Gate. This remains a candidate-site link until deployment.
-  accountPortalRegisterUrl: "https://app.dealalliancehub.com/register",
-  accountPortalLoginUrl: "https://app.dealalliancehub.com/login",
-  accountPortalAllowedOrigins: ["https://app.dealalliancehub.com"],
-  accountPortalMode: "enabled",
+  // Account destinations stay hidden until real remote registration and
+  // login lifecycle verification pass. Never send a visitor to a 404 or a
+  // staging explanation page.
+  accountPortalRegisterUrl: "",
+  accountPortalLoginUrl: "",
+  accountPortalAllowedOrigins: [],
+  accountPortalMode: "disabled",
   privacyVersion: "PENDING_PRIVACY_REVIEW"
 });

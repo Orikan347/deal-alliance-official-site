@@ -47,18 +47,18 @@ waitlist = contract["waitlist"]
 if waitlist["success_status"] != 202 or waitlist["accepted_status"] != "received" or waitlist["public_list_endpoint"]:
     raise SystemExit("FAIL_RELEASE_CONTRACT unsafe waitlist contract")
 account_portal = contract["account_portal"]
-if (account_portal["status"] != "PUBLIC_CTA_RELEASE_VERIFIED_PENDING_USER_ACCEPTANCE"
-        or account_portal["mode"] != "enabled"
-        or account_portal["allowed_origins"] != ["https://app.dealalliancehub.com"]
+if (account_portal["status"] != "PENDING_BACKEND_PUBLIC_REGISTRATION_RELEASE"
+        or account_portal["mode"] != "disabled"
+        or account_portal["allowed_origins"] != []
         or account_portal["approved_origin"] != "https://app.dealalliancehub.com"
-        or account_portal["register_url"] != "https://app.dealalliancehub.com/register"
-        or account_portal["login_url"] != "https://app.dealalliancehub.com/login"
-        or account_portal["register_url_status"] != "HTTPS_200_PRIVATE_STAGING_READBACK_PASS"
-        or account_portal["login_url_status"] != "HTTPS_200_PRIVATE_STAGING_READBACK_PASS"
-        or account_portal["public_entry_status"] != "PUBLIC_CTA_RELEASE_VERIFIED_NO_CREDENTIAL_FORMS"
-        or account_portal["lifecycle_status"] != "STAGING_OAUTH_READBACK_PASS"):
+        or account_portal["register_url"] != ""
+        or account_portal["login_url"] != ""
+        or account_portal["register_url_status"] != "HTTPS_404_NO_PUBLIC_FORM"
+        or account_portal["login_url_status"] != "HTTPS_200_STAGING_EXPLANATION_NO_FORM"
+        or account_portal["public_entry_status"] != "DISABLED_UNTIL_REMOTE_REGISTER_LOGIN_LIFECYCLE_PASS"
+        or account_portal["lifecycle_status"] != "LOCAL_FAKE_E2E_ONLY"):
     raise SystemExit("FAIL_RELEASE_CONTRACT unsafe account portal contract")
-if account_portal["public_site_behavior"] != "safe_https_register_and_login_links_only_no_credentials_or_session":
+if account_portal["public_site_behavior"] != "no_account_destination_is_rendered_until_the_private_account_service_passes_remote_lifecycle_verification":
     raise SystemExit("FAIL_RELEASE_CONTRACT account portal boundary is incomplete")
 for key in ("http_status", "security_headers", "canonical_origin", "sitemap", "waitlist_readback", "account_portal_private_headers"):
     if key not in contract["monitoring"]["checks"]:
@@ -81,4 +81,4 @@ if (operational.get("status") != "PENDING_OWNER_PUBLIC_LEGAL_AND_SUPPORT"
 if not contract["rollback"]["artifact"] or not contract["rollback"]["trigger"]:
     raise SystemExit("FAIL_RELEASE_CONTRACT rollback is incomplete")
 public_verified = contract["origin_status"] == "PUBLIC_HTTPS_READBACK_VERIFIED"
-print(f"PASS_RELEASE_CONTRACT paths={len(contract['required_public_paths'])} monitoring={len(contract['monitoring']['checks'])} public_release_verified={str(public_verified).lower()} account_lifecycle=staging_pass cta=public_release_verified_pending_user_acceptance operational_release_ready=false owner_inputs_pending={len(required_owner_inputs)}")
+print(f"PASS_RELEASE_CONTRACT paths={len(contract['required_public_paths'])} monitoring={len(contract['monitoring']['checks'])} public_release_verified={str(public_verified).lower()} account_lifecycle=local_fake_only cta=disabled_until_backend_release operational_release_ready=false owner_inputs_pending={len(required_owner_inputs)}")
