@@ -16,12 +16,16 @@
 - 常見問題：https://www.dealalliancehub.com/faq/
 - 隱私權說明：https://www.dealalliancehub.com/privacy/
 - 使用條款：https://www.dealalliancehub.com/terms/
+- 帳號與客服說明：https://www.dealalliancehub.com/support/
+- 付款與退款說明：https://www.dealalliancehub.com/refund/
 
 ## 服務狀態與資料邊界
 
 - 各工具是否開放，以工具頁的狀態標示為準；尚未開放的工具只提供正確的用途說明與開放資訊，不提供付款、下載或試用。
 - 公開網站不處理密碼、session、學生資料、管理設定、付款或工具授權。
 - 建立帳號與登入我的工具，僅會在核准的 HTTPS 後台完成隔離驗收後，以純導向連結提供；公開網站不代收帳密或 token。
+- 帳號問題可從帳號與客服說明頁前往建立帳號、登入或忘記密碼的安全入口；公開客服聯絡方式待服務方完成公開確認後才會公布。
+- 公開付款尚未開放，因此本站不建立付款訂單、一般下載或退款申請；正式付款與退款規則會在服務啟用前另行公告。
 - 候補／洽詢收件端點尚未啟用前，頁面不建立名單、不寄信、不傳送資料。
 
 請以可見 HTML、sitemap、robots、隱私權說明與工具頁的最新公開狀態為準；本檔僅協助 AI 系統理解網站導覽與安全邊界。

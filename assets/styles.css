@@ -5,4 +5,40 @@
 .button-secondary{color:var(--navy);border-color:#B9C7D9;background:var(--white);box-shadow:0 7px 18px rgba(16,35,63,.08)}.button-secondary:hover{border-color:#8A99AA;background:#F7F9FC}
 @media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}.button,.path-card,.choice-list a{transition:none}.button:hover,.path-card:hover{transform:none}}
 .nav-account-entry{min-height:42px;padding:.55rem .9rem;font-size:.82rem;white-space:nowrap}
+.tag.available{color:#17633F;background:#E9F8EF}
 @media (max-width:860px){.nav-account-entry{width:auto}}
+.provenance-line{max-width:none!important;margin:1rem 0 0!important;color:#729198!important;font-size:.72rem!important;letter-spacing:.01em}.provenance-line code{font:inherit;color:inherit;white-space:nowrap}
+
+/* Official-site owner: complete, platform-native interaction feedback. */
+:root{--control-blue:#0A84FF;--control-blue-hover:#0071E3;--control-blue-pressed:#005FC7;--control-focus:#64B5FF;--control-press-shadow:0 3px 10px rgba(10,132,255,.18);--control-ease:cubic-bezier(.2,.75,.25,1)}
+.button,.brand,.nav-links a,.choice-list a,.card-link,.text-link,.faq summary,button,[role=button]{-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.button{position:relative;isolation:isolate;overflow:hidden;min-height:44px;border-radius:999px;user-select:none;-webkit-user-select:none;transition:transform .16s var(--control-ease),box-shadow .16s var(--control-ease),background-color .16s ease,border-color .16s ease,color .16s ease,opacity .16s ease}
+.button-primary{color:#fff;background:var(--control-blue);border-color:var(--control-blue);box-shadow:0 8px 20px rgba(10,132,255,.24)}
+.button-ghost{color:#fff;background:transparent;border-color:rgba(255,255,255,.68);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
+.button-secondary{color:var(--navy);background:transparent;border-color:#8A99AA;box-shadow:none}
+.brand{min-height:44px;padding:.3rem .35rem;margin-left:-.35rem;border-radius:12px;transition:background-color .16s ease,opacity .16s ease,transform .16s var(--control-ease)}
+.nav-links a{min-height:44px;display:inline-flex;align-items:center;justify-content:center;transition:background-color .16s ease,color .16s ease,transform .16s var(--control-ease),box-shadow .16s ease}
+.choice-list a,.card-link,.text-link,.faq summary{transition:color .16s ease,background-color .16s ease,transform .16s var(--control-ease),box-shadow .16s ease,border-color .16s ease}
+.choice-list a{min-height:64px;border-radius:12px}
+.choice-arrow{transition:transform .16s var(--control-ease)}
+.card-link,.faq summary{min-height:44px;align-items:center}
+.text-link{min-height:44px;align-items:center;text-underline-offset:4px}
+.button:focus-visible,.brand:focus-visible,.nav-links a:focus-visible,.choice-list a:focus-visible,.card-link:focus-visible,.text-link:focus-visible,.faq summary:focus-visible,button:focus-visible,[role=button]:focus-visible{outline:3px solid #fff;outline-offset:2px;box-shadow:0 0 0 6px var(--control-focus),0 8px 22px rgba(16,35,63,.18)}
+.button:is(:active,.is-pressed),.brand:is(:active,.is-pressed),.nav-links a:is(:active,.is-pressed),.choice-list a:is(:active,.is-pressed),.card-link:is(:active,.is-pressed),.text-link:is(:active,.is-pressed),.faq summary:is(:active,.is-pressed),button:is(:active,.is-pressed),[role=button]:is(:active,.is-pressed){transform:translateY(1px) scale(.97);transition-duration:.06s}
+.button-primary:is(:active,.is-pressed){background:var(--control-blue-pressed);border-color:var(--control-blue-pressed);box-shadow:var(--control-press-shadow)}
+.button-ghost:is(:active,.is-pressed){background:rgba(255,255,255,.18);border-color:#fff;box-shadow:none}
+.button-secondary:is(:active,.is-pressed){background:#E8EEF5;border-color:#5E6E82;box-shadow:none}
+.button:disabled,.button[aria-disabled=true],.button.is-disabled,button:disabled,button[aria-disabled=true],[role=button][aria-disabled=true]{opacity:.46;cursor:not-allowed;pointer-events:none;transform:none;box-shadow:none;filter:saturate(.55)}
+.button[aria-busy=true]{cursor:progress;pointer-events:none;color:transparent}
+.button[aria-busy=true]::before{content:"";position:absolute;width:1rem;height:1rem;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;color:#fff;animation:official-site-control-spin .7s linear infinite}
+.control-feedback{display:block;max-width:38rem;margin:.55rem 0 0;padding:.55rem .7rem;border:1px solid currentColor;border-radius:10px;font-size:.82rem;font-weight:750;line-height:1.45}
+.control-feedback--busy{color:#285D97;background:#EAF4FF}
+.control-feedback--success{color:#17633F;background:#E9F8EF}
+.control-feedback--error{color:#9D271D;background:#FFF0EE}
+@keyframes official-site-control-spin{to{transform:rotate(1turn)}}
+@media (hover:hover) and (pointer:fine){.button:hover{transform:translateY(-1px)}.button-primary:hover{background:var(--control-blue-hover);border-color:var(--control-blue-hover);box-shadow:0 11px 26px rgba(10,132,255,.3)}.button-ghost:hover{color:#fff;background:rgba(255,255,255,.11);border-color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}.button-secondary:hover{color:var(--navy);background:#fff;border-color:#5E6E82;box-shadow:0 7px 18px rgba(16,35,63,.09)}.brand:hover{background:rgba(255,255,255,.08)}.nav-links a:hover{color:#fff;background:rgba(10,132,255,.26);box-shadow:inset 0 0 0 1px rgba(100,181,255,.16)}.choice-list a:hover{padding-left:.4rem;background:rgba(10,132,255,.055)}.choice-list a:hover .choice-arrow{transform:translateX(4px)}.card-link:hover,.text-link:hover{color:var(--control-blue-hover);text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:4px}.faq summary:hover{color:var(--control-blue-hover)}}
+@media (hover:hover) and (pointer:fine){.button:is(:active,.is-pressed){transform:translateY(1px) scale(.97)}}
+@media (pointer:coarse){.button,.brand,.nav-links a,.card-link,.text-link,.faq summary{min-height:48px}.choice-list a{min-height:68px}}
+@media (max-width:860px){.nav-links a{min-height:44px}.hero-actions .button{width:100%}}
+@media (max-width:860px) and (pointer:coarse){.nav-links a{min-height:48px}}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.button,.brand,.nav-links a,.choice-list a,.card-link,.text-link,.faq summary,.choice-arrow,button,[role=button],.button[aria-busy=true]::before{animation:none!important;transition:none!important}.button:hover,.button:is(:active,.is-pressed),.brand:is(:active,.is-pressed),.nav-links a:is(:active,.is-pressed),.choice-list a:is(:active,.is-pressed),.card-link:is(:active,.is-pressed),.text-link:is(:active,.is-pressed),.faq summary:is(:active,.is-pressed),button:is(:active,.is-pressed),[role=button]:is(:active,.is-pressed),.choice-list a:hover .choice-arrow{transform:none!important}}

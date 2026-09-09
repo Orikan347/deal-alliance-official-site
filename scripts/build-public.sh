@@ -11,7 +11,7 @@ for item in 404.html _headers _routes.json index.html llms.txt robots.txt sitema
   cp "$item" dist/
 done
 
-for directory in about assets faq privacy resources search solutions terms waitlist; do
+for directory in about assets faq healthz privacy refund resources search solutions support terms waitlist; do
   cp -R "$directory" dist/
 done
 

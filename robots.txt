@@ -9,5 +9,6 @@ Disallow: /admin/
 Disallow: /students/
 Disallow: /private/
 Disallow: /drafts/
+Disallow: /healthz/
 
 Sitemap: https://www.dealalliancehub.com/sitemap.xml
